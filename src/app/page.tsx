@@ -1,69 +1,87 @@
-import Image from "next/image";
+'use client';
+
+import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Header } from '@/components/ui/Header';
+import { StudioRosterDock } from '@/components/ui/StudioRosterDock';
+import { ContextualInspector } from '@/components/ui/ContextualInspector';
+import { BottomTimeline } from '@/components/ui/BottomTimeline';
+import { AddCriticModal } from '@/components/ui/AddCriticModal';
+import { PRSummaryModal } from '@/components/ui/PRSummaryModal';
+import { MultiDevModal } from '@/components/ui/MultiDevModal';
+import { useCouncilStore } from '@/store/councilStore';
+import { Loader2 } from 'lucide-react';
+
+// Dynamically import 3D Canvas without SSR to prevent WebGL hydration mismatches
+const OfficeCanvas = dynamic(
+  () => import('@/components/3d/OfficeCanvas').then((mod) => mod.OfficeCanvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#FAF8F5] text-stone-600 gap-3">
+        <Loader2 className="w-7 h-7 animate-spin text-[#D97059]" />
+        <p className="text-xs font-mono tracking-wider text-stone-500 uppercase">
+          Sculpting Scandinavian Clay Studio Diorama...
+        </p>
+      </div>
+    )
+  }
+);
 
 export default function Home() {
+  const stepForward = useCouncilStore((state) => state.stepForward);
+  const stepBackward = useCouncilStore((state) => state.stepBackward);
+  const togglePlayPause = useCouncilStore((state) => state.togglePlayPause);
+  const resetWorkflow = useCouncilStore((state) => state.resetWorkflow);
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlayPause();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        stepForward();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        stepBackward();
+      } else if (e.key === 'r' || e.key === 'R') {
+        resetWorkflow();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [stepForward, stepBackward, togglePlayPause, resetWorkflow]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="w-screen h-screen flex flex-col overflow-hidden bg-[#FAF8F5] text-stone-800 select-none relative font-sans">
+      {/* Top Editorial Navigation Bar */}
+      <Header />
+
+      {/* Hero 3D Diorama Viewport */}
+      <div className="flex-1 h-full relative overflow-hidden bg-[#FAF8F5]">
+        <OfficeCanvas />
+
+        {/* Collapsible Left Studio Navigator & Workers Roster Dock */}
+        <StudioRosterDock />
+
+        {/* Slide-over Contextual Inspector Drawer */}
+        <ContextualInspector />
+      </div>
+
+      {/* Floating Bottom Timeline Stepper & Controls */}
+      <BottomTimeline />
+
+      {/* Interactive Modals */}
+      <AddCriticModal />
+      <PRSummaryModal />
+      <MultiDevModal />
+    </main>
   );
 }
