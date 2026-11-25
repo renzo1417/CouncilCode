@@ -3,45 +3,41 @@
 import React, { useState } from 'react';
 import { useCouncilStore } from '@/store/councilStore';
 import { ModelProvider, ReviewerRole } from '@/types/council';
-import { X, Bot, Shield, Cpu, Zap, Sparkles, Check } from 'lucide-react';
+import { X, Check } from 'lucide-react';
+import { ModalDialog } from './ModalDialog';
 
 const MODEL_OPTIONS: { id: ModelProvider; name: string; tag: string; color: string }[] = [
   { id: 'anthropic', name: 'Claude 3.7 Sonnet', tag: 'Anthropic', color: '#D97706' },
   { id: 'openai', name: 'GPT-4o', tag: 'OpenAI', color: '#10B981' },
   { id: 'deepseek', name: 'DeepSeek R1', tag: 'DeepSeek', color: '#06B6D4' },
-  { id: 'google', name: 'Gemini 2.0 Flash', tag: 'Google', color: '#6366F1' },
+  { id: 'google', name: 'Gemini 2.5', tag: 'Google', color: '#3B82F6' }
 ];
 
-const ROLE_OPTIONS: { id: ReviewerRole; name: string; description: string; icon: React.ElementType }[] = [
+const ROLE_OPTIONS: { id: ReviewerRole; name: string; description: string }[] = [
   {
     id: 'security',
-    name: 'Security & Auth Reviewer',
-    description: 'Finds IDOR, Auth bypass, injection, and privilege escalation vulnerabilities with executable exploit assertions.',
-    icon: Shield
+    name: 'Security & auth',
+    description: 'Finds IDOR, auth bypass, and privilege escalation with executable exploit assertions.'
   },
   {
     id: 'logic',
-    name: 'Logic & Invariants Reviewer',
-    description: 'Verifies state machines, boundary conditions, race conditions, and numeric edge cases.',
-    icon: Cpu
+    name: 'Logic & invariants',
+    description: 'Verifies state machines, boundary conditions, and null-safety edge cases.'
   },
   {
     id: 'contract',
-    name: 'API & Contract Reviewer',
-    description: 'Verifies OpenAPI schemas, backward compatibility, and response status contracts.',
-    icon: Bot
+    name: 'API & contract',
+    description: 'Verifies OpenAPI schemas, backward compatibility, and status code contracts.'
   },
   {
     id: 'performance',
-    name: 'Performance & DB Reviewer',
-    description: 'Detects N+1 query patterns, algorithmic complexity traps, and memory leak vectors.',
-    icon: Zap
+    name: 'Performance & database',
+    description: 'Detects N+1 queries, algorithmic complexity traps, and memory leak vectors.'
   },
   {
     id: 'style',
-    name: 'Code Idioms & Architecture',
-    description: 'Checks codebase consistency, naming idioms, and architectural conformance.',
-    icon: Sparkles
+    name: 'Code idioms',
+    description: 'Checks naming conventions and style consistency (filtered if unproved).'
   }
 ];
 
@@ -56,16 +52,18 @@ export const AddCriticModal: React.FC = () => {
   const [model, setModel] = useState<ModelProvider>('deepseek');
   const [color, setColor] = useState('#06B6D4');
 
-  if (!isAddCriticOpen) return null;
+  const isFull = critics.length >= 6;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFull) return;
+
     const success = addCritic({
       id: `critic-${Date.now()}`,
       name: name.trim() || 'AI Reviewer',
       role,
       model,
-      deskIndex: 0, // determined dynamically in store
+      deskIndex: 0,
       color,
       accentColor: color,
       avatarSeed: name.toLowerCase().replace(/\s+/g, '-'),
@@ -74,63 +72,74 @@ export const AddCriticModal: React.FC = () => {
 
     if (success) {
       setAddCriticOpen(false);
-    } else {
-      alert('All 6 critic desks in the office are currently occupied!');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div
-        className="bg-[#FAF8F5] border border-stone-200/90 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-stone-800"
-        style={{
-          boxShadow: '0 20px 48px -8px rgba(45, 35, 25, 0.16)'
-        }}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-stone-200/80 flex items-center justify-between bg-white/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#C85A3E]/10 border border-[#C85A3E]/20 flex items-center justify-center text-[#C85A3E]">
-              <Bot className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-stone-900">Configure Critic Reviewer</h2>
-              <p className="text-[11px] text-stone-500">
-                Vendor-neutral AI reviewer entering the studio diorama
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setAddCriticOpen(false)}
-            className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+    <ModalDialog
+      open={isAddCriticOpen}
+      onClose={() => setAddCriticOpen(false)}
+      titleId="add-critic-title"
+      maxWidthClass="max-w-lg"
+    >
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-[#E6E4DF] flex items-start justify-between gap-3 shrink-0">
+        <div>
+          <h2 id="add-critic-title" className="text-[16px] font-semibold text-[#141413]">
+            Add reviewer to council
+          </h2>
+          <p className="text-[13px] text-[#575550] mt-0.5">
+            Assign a model provider and specialty to an open studio desk.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setAddCriticOpen(false)}
+          aria-label="Close modal"
+          className="h-8 w-8 rounded-lg text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* Form Body */}
+      <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto cc-scroll">
+        {isFull && (
+          <div
+            role="status"
+            className="p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] text-[13px] text-[#92400E]"
           >
-            <X className="w-4 h-4" />
-          </button>
+            All 6 studio desks are occupied. Remove a custom reviewer in the Council roster to add another.
+          </div>
+        )}
+
+        {/* Reviewer Name */}
+        <div className="space-y-2">
+          <label htmlFor="reviewer-name-input" className="block text-[13px] font-medium text-[#141413]">
+            Reviewer name
+          </label>
+          <input
+            id="reviewer-name-input"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            className="w-full h-10 px-3 rounded-lg bg-white border border-[#D4D1CA] text-[14px] text-[#141413] placeholder:text-[#6B6862] focus:outline-none focus:border-[#141413] transition-colors"
+            placeholder="e.g. Claude Security Sentinel"
+            required
+          />
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Agent Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-700">Reviewer Persona / Identity</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-[#C85A3E] focus:ring-1 focus:ring-[#C85A3E]/30 transition-all font-sans"
-              placeholder="e.g. Claude Security Sentinel"
-              required
-            />
+        {/* Model Provider */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium text-[#141413]">Model provider</span>
+            <span className="text-[12px] text-[#6B6862]">Cross-vendor BYOK</span>
           </div>
-
-          {/* Model Provider (Vendor-Neutral BYOK Philosophy) */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-700 flex items-center justify-between">
-              <span>Model Provider</span>
-              <span className="text-[10px] text-stone-500 font-mono">Cross-Vendor BYOK</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {MODEL_OPTIONS.map((m) => (
+          <div className="grid grid-cols-2 gap-2">
+            {MODEL_OPTIONS.map((m) => {
+              const selected = model === m.id;
+              return (
                 <button
                   type="button"
                   key={m.id}
@@ -138,89 +147,76 @@ export const AddCriticModal: React.FC = () => {
                     setModel(m.id);
                     setColor(m.color);
                   }}
-                  className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                    model === m.id
-                      ? 'bg-white border-[#C85A3E] shadow-2xs ring-1 ring-[#C85A3E]/20'
-                      : 'bg-white/60 border-stone-200/80 hover:bg-white'
+                  className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                    selected
+                      ? 'bg-[#F6F5F2] border-[#141413]'
+                      : 'bg-white border-[#E6E4DF] hover:bg-[#FAF9F7]'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-stone-900">{m.name}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[13px] font-medium text-[#141413]">{m.name}</span>
                     <span
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: m.color }}
+                      aria-hidden="true"
                     />
                   </div>
-                  <span className="text-[10px] text-stone-400 font-mono">{m.tag}</span>
+                  <span className="block text-[12px] text-[#6B6862] mt-0.5">{m.tag}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Reviewer Role */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-700">Specialization Role</label>
-            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-              {ROLE_OPTIONS.map((r) => {
-                const Icon = r.icon;
-                const isSelected = role === r.id;
-                return (
-                  <button
-                    type="button"
-                    key={r.id}
-                    onClick={() => setRole(r.id)}
-                    className={`w-full p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-white border-[#C85A3E] shadow-2xs ring-1 ring-[#C85A3E]/20'
-                        : 'bg-white/60 border-stone-200/80 hover:bg-white'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-[#C85A3E] text-white' : 'bg-stone-100 text-stone-500'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-stone-900">{r.name}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#C85A3E]" />}
-                      </div>
-                      <p className="text-[11px] text-stone-500 leading-tight mt-0.5 line-clamp-1">
-                        {r.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Specialty */}
+        <div className="space-y-2">
+          <span className="block text-[13px] font-medium text-[#141413]">Review focus</span>
+          <div className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
+            {ROLE_OPTIONS.map((r) => {
+              const isSelected = role === r.id;
+              return (
+                <button
+                  type="button"
+                  key={r.id}
+                  onClick={() => setRole(r.id)}
+                  className={`w-full px-3.5 py-2.5 text-left flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                    isSelected ? 'bg-[#F6F5F2]' : 'bg-white hover:bg-[#FAF9F7]'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-medium text-[#141413]">{r.name}</div>
+                    <p className="text-[12px] text-[#575550] truncate mt-0.5">{r.description}</p>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-[#141413] shrink-0" aria-hidden="true" />}
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Footer Submit */}
-          <div className="pt-3 border-t border-stone-200/80 flex items-center justify-between">
-            <div className="text-[11px] font-mono text-stone-500">
-              Desks Occupied: <span className="font-semibold text-stone-900">{critics.length}/6</span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAddCriticOpen(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-[#C85A3E] hover:bg-[#B34B31] text-white shadow-xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span>Assign to Desk</span>
-              </button>
-            </div>
+        {/* Footer */}
+        <div className="pt-4 border-t border-[#E6E4DF] flex items-center justify-between gap-3">
+          <span className="text-[12.5px] text-[#6B6862] tabular-nums">
+            {critics.length} of 6 desks occupied
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAddCriticOpen(false)}
+              className="h-9 px-3.5 rounded-lg border border-[#E6E4DF] bg-white hover:bg-[#F6F5F2] text-[13px] font-medium text-[#575550] hover:text-[#141413] transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isFull}
+              className="h-9 px-4 rounded-lg text-[13px] font-medium bg-[#141413] hover:bg-[#2A2A28] disabled:opacity-40 disabled:cursor-not-allowed text-white cc-press cursor-pointer"
+            >
+              Add to studio
+            </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </ModalDialog>
   );
 };

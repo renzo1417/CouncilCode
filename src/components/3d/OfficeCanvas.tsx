@@ -28,13 +28,13 @@ export const OfficeCanvas: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full relative bg-gradient-to-b from-[#FAF8F5] via-[#F4EFE6] to-[#EAE3D6] select-none">
+    <div className="w-full h-full relative bg-[#F3F3F1] select-none">
       <Suspense
         fallback={
-          <div className="w-full h-full flex flex-col items-center justify-center bg-[#FAF8F5] text-stone-500 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
-            <p className="text-xs font-mono uppercase tracking-widest text-stone-500">
-              Mounting CouncilCode Studio Diorama...
+          <div className="w-full h-full flex flex-col items-center justify-center bg-[#F5F5F4] text-[#575550] gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-[#141413]" />
+            <p className="text-[13px] font-medium text-[#575550]">
+              Preparing studio scene...
             </p>
           </div>
         }

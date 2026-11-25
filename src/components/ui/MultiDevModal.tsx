@@ -2,108 +2,96 @@
 
 import React from 'react';
 import { useCouncilStore } from '@/store/councilStore';
-import { Network, X, Layers, GitMerge, FileKey } from 'lucide-react';
+import { X, FileKey, Layers, GitMerge } from 'lucide-react';
+import { ModalDialog } from './ModalDialog';
 
 export const MultiDevModal: React.FC = () => {
   const isMultiDevModalOpen = useCouncilStore((state) => state.isMultiDevModalOpen);
   const setMultiDevModalOpen = useCouncilStore((state) => state.setMultiDevModalOpen);
 
-  if (!isMultiDevModalOpen) return null;
+  const steps = [
+    {
+      icon: FileKey,
+      title: 'Contract handshake & locked schemas',
+      description:
+        'A System Architect agent locks OpenAPI specs and shared types before implementation starts so parallel branches stay aligned.'
+    },
+    {
+      icon: Layers,
+      title: 'Parallel frontend & backend pods',
+      description:
+        'Each pod runs its own Coding Agent, deterministic sandbox, and dedicated Critic Council independently.'
+    },
+    {
+      icon: GitMerge,
+      title: 'Higher council & integration sandbox',
+      description:
+        'Once pods pass local review, the Higher Council verifies cross-service contracts and runs end-to-end integration tests before opening linked PRs.'
+    }
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div
-        className="bg-[#FAF8F5] border border-stone-200/90 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-stone-800"
-        style={{
-          boxShadow: '0 20px 48px -8px rgba(45, 35, 25, 0.16)'
-        }}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-stone-200/80 flex items-center justify-between bg-white/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-800">
-              <Network className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-stone-500">CouncilCode Architecture</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-medium bg-stone-100 text-stone-700 border border-stone-200">
-                  team pods
-                </span>
-              </div>
-              <h2 className="text-sm font-semibold text-stone-900 font-sans mt-0.5">
-                Multi-Developer Mode: Pods &amp; Two-Tier Consensus
-              </h2>
-            </div>
-          </div>
-          <button
-            onClick={() => setMultiDevModalOpen(false)}
-            className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <ModalDialog
+      open={isMultiDevModalOpen}
+      onClose={() => setMultiDevModalOpen(false)}
+      titleId="multidev-modal-title"
+      maxWidthClass="max-w-xl"
+    >
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-[#E6E4DF] flex items-start justify-between gap-3 shrink-0">
+        <div>
+          <span className="text-[12px] text-[#6B6862]">Team pods architecture</span>
+          <h2 id="multidev-modal-title" className="text-[16px] font-semibold text-[#141413] mt-0.5">
+            Two-tier consensus for multi-developer teams
+          </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => setMultiDevModalOpen(false)}
+          aria-label="Close modal"
+          className="h-8 w-8 rounded-lg text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
 
-        {/* Content Body */}
-        <div className="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto">
-          <p className="text-xs text-stone-600 leading-relaxed">
-            In multi-developer teams, AI-written code drifts apart and causes interface conflicts.
-            CouncilCode solves this with a two-tier consensus model:
-          </p>
+      {/* Body */}
+      <div className="p-6 space-y-4 overflow-y-auto cc-scroll">
+        <p className="text-[13px] text-[#575550] leading-relaxed">
+          In multi-developer teams, AI-written code drifts apart and causes interface conflicts at integration time. CouncilCode coordinates pods with a shared contract:
+        </p>
 
-          {/* Step 1: Contract Handshake */}
-          <div className="p-3.5 rounded-xl bg-white border border-stone-200/80 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-stone-900">
-              <FileKey className="w-3.5 h-3.5 text-[#C85A3E]" />
-              <span>1. Contract Handshake &amp; Locked Schemas</span>
-            </div>
-            <p className="text-[11px] text-stone-500 leading-relaxed">
-              System Architect agent locks API schemas, OpenAPI specs, and shared types before coding starts.
-              The contract is committed to prevent interface drift.
-            </p>
-          </div>
+        <ol className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
+          {steps.map((step) => {
+            const Icon = step.icon;
+            return (
+              <li key={step.title} className="p-4 bg-white flex items-start gap-3">
+                <Icon className="w-4 h-4 text-[#575550] shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="space-y-1">
+                  <div className="text-[13.5px] font-semibold text-[#141413]">{step.title}</div>
+                  <p className="text-[12.5px] text-[#575550] leading-relaxed">{step.description}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
 
-          {/* Step 2: Parallel Pods */}
-          <div className="p-3.5 rounded-xl bg-white border border-stone-200/80 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-stone-900">
-              <Layers className="w-3.5 h-3.5 text-stone-700" />
-              <span>2. Parallel Frontend &amp; Backend Pods</span>
-            </div>
-            <p className="text-[11px] text-stone-500 leading-relaxed">
-              Each pod operates its own Pod Main Agent, Coding Agents, and dedicated Critic Council.
-              Pods independently clear their local deterministic sandboxes.
-            </p>
-          </div>
-
-          {/* Step 3: Higher Council Arbitration */}
-          <div className="p-3.5 rounded-xl bg-white border border-stone-200/80 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-stone-900">
-              <GitMerge className="w-3.5 h-3.5 text-[#0D5F3A]" />
-              <span>3. Higher Council &amp; Integration Sandbox</span>
-            </div>
-            <p className="text-[11px] text-stone-500 leading-relaxed">
-              Once both pods pass local review, the Higher Council inspects contract conformance and cross-service security
-              without re-judging what pods already approved. Integration sandbox runs end-to-end tests and coordinates linked PRs.
-            </p>
-          </div>
-
-          {/* Status Note */}
-          <div className="p-3 rounded-lg bg-stone-100/70 border border-stone-200/80 text-xs text-stone-600 flex items-center justify-between">
-            <span className="text-[11px] font-mono text-stone-500">Current Demo Mode:</span>
-            <span className="font-medium text-stone-900 text-xs">Single-Developer Proof-Gated Engine (Live)</span>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-stone-200/80 bg-white/70 flex justify-end">
-          <button
-            onClick={() => setMultiDevModalOpen(false)}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-stone-900 hover:bg-stone-800 text-white transition-colors cursor-pointer shadow-xs active:scale-[0.98]"
-          >
-            Got It
-          </button>
+        <div className="px-3.5 py-2.5 rounded-xl bg-[#F6F5F2] border border-[#E6E4DF] flex items-center justify-between text-[12.5px]">
+          <span className="text-[#6B6862]">Current walkthrough</span>
+          <span className="font-medium text-[#141413]">Single-developer proof-gated loop</span>
         </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-[#E6E4DF] flex justify-end shrink-0">
+        <button
+          type="button"
+          onClick={() => setMultiDevModalOpen(false)}
+          className="h-9 px-4 rounded-lg text-[13px] font-medium bg-[#141413] hover:bg-[#2A2A28] text-white cc-press cursor-pointer"
+        >
+          Done
+        </button>
+      </div>
+    </ModalDialog>
   );
 };

@@ -120,6 +120,7 @@ interface CouncilStore {
   isMultiDevModalOpen: boolean;
   isPRSummaryOpen: boolean;
   isInspectorOpen: boolean;
+  isRosterOpen: boolean;
   inspectorTab: 'claim' | 'code' | 'sandbox' | 'history';
 
   // Actions
@@ -141,7 +142,7 @@ interface CouncilStore {
   // Selection
   selectAgent: (id: string | null) => void;
   selectFinding: (id: string | null) => void;
-  selectStation: (station: string | null) => void;
+  selectStation: (station: string | null, openInspector?: boolean) => void;
   setCameraFocus: (focus: 'overview' | 'arbiter' | 'sandbox' | 'coder' | 'agent', target?: [number, number, number]) => void;
 
   // Modals & Panels
@@ -149,6 +150,7 @@ interface CouncilStore {
   setMultiDevModalOpen: (open: boolean) => void;
   setPRSummaryOpen: (open: boolean) => void;
   setInspectorOpen: (open: boolean) => void;
+  setRosterOpen: (open: boolean) => void;
   setInspectorTab: (tab: 'claim' | 'code' | 'sandbox' | 'history') => void;
 }
 
@@ -198,6 +200,7 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
   isMultiDevModalOpen: false,
   isPRSummaryOpen: false,
   isInspectorOpen: false,
+  isRosterOpen: false,
   inspectorTab: 'claim',
 
   setWorkflowState: (state) => set({ workflowState: state }),
@@ -219,7 +222,14 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
   setAddCriticOpen: (open) => set({ isAddCriticOpen: open }),
   setMultiDevModalOpen: (open) => set({ isMultiDevModalOpen: open }),
   setPRSummaryOpen: (open) => set({ isPRSummaryOpen: open }),
-  setInspectorOpen: (open) => set({ isInspectorOpen: open }),
+  setInspectorOpen: (open) => set((state) => ({
+    isInspectorOpen: open,
+    isRosterOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : state.isRosterOpen
+  })),
+  setRosterOpen: (open) => set((state) => ({
+    isRosterOpen: open,
+    isInspectorOpen: open && typeof window !== 'undefined' && window.innerWidth < 1024 ? false : state.isInspectorOpen
+  })),
   setInspectorTab: (tab) => set({ inspectorTab: tab }),
 
   selectAgent: (id) => {
@@ -231,12 +241,14 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
     const agent = get().critics.find((c) => c.id === id);
     if (agent) {
       const relatedFinding = get().findings.find((f) => f.criticId === id);
+      const isNarrow = typeof window !== 'undefined' && window.innerWidth < 1024;
       set({
         selectedAgentId: id,
         selectedStation: null,
         cameraFocus: 'agent',
         focusTarget: agent.targetPosition,
         isInspectorOpen: true,
+        isRosterOpen: isNarrow ? false : get().isRosterOpen,
         inspectorTab: 'claim',
         ...(relatedFinding ? { selectedFindingId: relatedFinding.id } : {})
       });
@@ -260,7 +272,7 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
     }
   },
 
-  selectStation: (station) => {
+  selectStation: (station, openInspector = true) => {
     if (get().soundEnabled) playSound('click');
     if (!station) {
       set({ selectedStation: null, selectedAgentId: null });
@@ -269,10 +281,13 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
     }
     const nextTab =
       station === 'sandbox' ? 'sandbox' : station === 'coder' ? 'code' : 'claim';
+    const shouldOpenInspector = openInspector || get().isInspectorOpen;
+    const isNarrow = typeof window !== 'undefined' && window.innerWidth < 1024;
     set({
       selectedStation: station,
       selectedAgentId: null,
-      isInspectorOpen: true,
+      isInspectorOpen: shouldOpenInspector,
+      isRosterOpen: shouldOpenInspector && isNarrow ? false : get().isRosterOpen,
       inspectorTab: nextTab
     });
     if (station === 'arbiter') {
@@ -501,11 +516,11 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
             compiler: 'passed',
             baselineTests: 'passed',
             details: [
-              '✅ Linter: Clean',
-              '✅ TypeScript: Clean',
-              '✅ Build: 0 errors',
-              '✅ Baseline Tests: 3/3 passing',
-              '🚀 Deterministic gate cleared! Token spend authorized for Critic Council.'
+              'Linter: Clean (0 errors)',
+              'TypeScript: Clean (0 type errors)',
+              'Build: Clean (0 errors)',
+              'Baseline Tests: 3/3 passing',
+              'Deterministic gate cleared. Critic Council review authorized.'
             ]
           },
           critics: state.critics.map((c) => ({
@@ -513,7 +528,7 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
             status: c.role === 'security' ? 'found_issue' : 'reviewing',
             currentThought:
               c.role === 'security'
-                ? '⚠️ Detected missing tenant constraint on GET /api/v1/invoices/:id! Drafting exploit assertion...'
+                ? 'Detected missing tenant constraint on GET /api/v1/invoices/:id. Drafting exploit assertion...'
                 : c.role === 'style'
                 ? 'Suggesting functional pipe refactor (no executable bug assertion)...'
                 : 'Inspecting auth context null-coalescing and OpenAPI contract...'
@@ -733,11 +748,11 @@ export const useCouncilStore = create<CouncilStore>((set, get) => ({
             baselineTests: 'passed',
             regressionTests: 'passed',
             details: [
-              '✅ Linter: 0 errors',
-              '✅ Typecheck: Clean',
-              '✅ Baseline Tests: 3/3 passed',
-              '✅ Security Regression Test: PASS (403 Forbidden verified on cross-tenant access)',
-              'All tests green!'
+              'Linter: 0 errors',
+              'Typecheck: Clean',
+              'Baseline Tests: 3/3 passed',
+              'Security Regression Test: PASS (403 Forbidden verified on cross-tenant access)',
+              'All checks green.'
             ]
           },
           critics: state.critics.map((c) => ({

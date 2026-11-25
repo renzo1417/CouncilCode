@@ -1,19 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'CouncilCode — Multi-Agent AI Code Review & Verification Platform',
+  title: 'CouncilCode — Proof-Gated Multi-Agent Code Verification',
   description:
     'One verified, green-tested Pull Request instead of a thread of AI comments. Competing AI models prove bugs with executable evidence before code reaches human review.',
   keywords: [
@@ -29,10 +25,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#FAF8F5',
+  themeColor: '#F5F5F4',
   width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1
+  initialScale: 1
 };
 
 export default function RootLayout({
@@ -44,11 +39,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} h-full antialiased`}
     >
       <body
         suppressHydrationWarning
-        className="h-full w-full overflow-hidden bg-[#FAF8F5] text-stone-800 flex flex-col font-sans"
+        className="h-full w-full overflow-hidden bg-[#F5F5F4] text-[#141413] flex flex-col font-sans"
       >
         {children}
       </body>

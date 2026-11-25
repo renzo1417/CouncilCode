@@ -202,7 +202,7 @@ export const AgentCharacter: React.FC<AgentCharacterProps> = ({
       case 'approved':
         return { label: 'Approved', dot: '#10B981' };
       case 'celebrating':
-        return { label: 'Verified ✓', dot: '#10B981' };
+        return { label: 'Verified', dot: '#10B981' };
       default:
         return { label: agent.role, dot: agent.accentColor };
     }

@@ -4,19 +4,43 @@ import React from 'react';
 import { useCouncilStore } from '@/store/councilStore';
 import {
   X,
-  ShieldAlert,
-  Server,
   FileCode2,
   CheckCircle2,
-  Terminal,
-  GitCompare,
-  Sparkles,
-  Bot,
-  Cpu,
-  History,
+  XCircle,
+  Clock,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+
+const MODEL_NAMES: Record<string, string> = {
+  anthropic: 'Claude 3.7 Sonnet',
+  deepseek: 'DeepSeek R1',
+  openai: 'GPT-4o',
+  google: 'Gemini 2.5'
+};
+
+const ROLE_NAMES: Record<string, string> = {
+  security: 'Security reviewer',
+  logic: 'Logic reviewer',
+  contract: 'Contract reviewer',
+  performance: 'Performance reviewer',
+  style: 'Style reviewer'
+};
+
+const DIFF_LINES: { type: 'meta' | 'context' | 'add' | 'remove'; text: string }[] = [
+  { type: 'meta', text: '@@ -18,10 +18,18 @@' },
+  { type: 'context', text: "  invoiceRouter.get('/:id', requireAuth, async (req, res) => {" },
+  { type: 'add', text: '+   const userOrgId = req.user?.organizationId;' },
+  { type: 'add', text: "+   if (!userOrgId) throw new ForbiddenError('Missing org context');" },
+  { type: 'context', text: '    const invoice = await db.invoices.findUnique({ where: { id } });' },
+  { type: 'remove', text: '-   // Missing tenant ownership verification!' },
+  { type: 'add', text: '+   // CouncilCode verified guard:' },
+  { type: 'add', text: '+   if (invoice.organizationId !== userOrgId) {' },
+  { type: 'add', text: "+     return res.status(403).json({ error: 'Forbidden' });" },
+  { type: 'add', text: '+   }' },
+  { type: 'context', text: '    return res.status(200).json({ invoice });' },
+  { type: 'context', text: '  });' }
+];
 
 export const ContextualInspector: React.FC = () => {
   const isInspectorOpen = useCouncilStore((state) => state.isInspectorOpen);
@@ -39,9 +63,6 @@ export const ContextualInspector: React.FC = () => {
   const revisionLoop = useCouncilStore((state) => state.revisionLoop);
   const auditLog = useCouncilStore((state) => state.auditLog);
 
-  if (!isInspectorOpen) return null;
-
-  // Resolve what is currently focused
   const selectedAgent = critics.find((c) => c.id === selectedAgentId);
   const activeFinding =
     findings.find((f) => f.id === selectedFindingId) ||
@@ -59,263 +80,232 @@ export const ContextualInspector: React.FC = () => {
   };
 
   const title = selectedAgent
-    ? `${selectedAgent.name} (Desk #${selectedAgent.deskIndex + 1})`
+    ? selectedAgent.name
     : selectedStation === 'arbiter'
-    ? 'Main Arbiter Command'
+    ? 'Main Arbiter'
     : selectedStation === 'sandbox'
-    ? 'Deterministic Sandbox Kiln'
+    ? 'Sandbox Kiln'
     : selectedStation === 'coder'
-    ? 'Coding Agent Station'
-    : activeFinding?.title || 'Inspection Panel';
+    ? 'Coding Agent'
+    : activeFinding?.title || 'Verification Inspector';
 
-  const roleBadge = selectedAgent
-    ? `${selectedAgent.role.toUpperCase()} CRITIC`
+  const subtitle = selectedAgent
+    ? `${ROLE_NAMES[selectedAgent.role] || selectedAgent.role} · ${MODEL_NAMES[selectedAgent.model] || selectedAgent.model}`
     : selectedStation === 'arbiter'
-    ? 'CHIEF ARBITER'
-    : selectedStation === 'coder'
-    ? 'CODEBASE OWNER'
+    ? 'Sole arbiter reconciling verified proofs'
     : selectedStation === 'sandbox'
-    ? 'FAST-FAIL GATE'
-    : 'VERIFICATION';
-
-  const modelBadge = selectedAgent
-    ? selectedAgent.model === 'anthropic'
-      ? 'Claude 3.7 Sonnet'
-      : selectedAgent.model === 'deepseek'
-      ? 'DeepSeek R1'
-      : selectedAgent.model === 'openai'
-      ? 'GPT-4o'
-      : 'Gemini 2.5'
-    : selectedStation === 'arbiter'
-    ? 'Sole Arbiter Engine'
+    ? 'Zero-token deterministic fast-fail gate'
     : selectedStation === 'coder'
-    ? 'TypeScript Builder'
-    : 'Zero-Token Sandbox';
+    ? 'TypeScript patch builder'
+    : 'Proof-gated verification details';
+
+  const sandboxChecks = [
+    { label: 'ESLint & Biome', status: sandboxState.linter },
+    { label: 'TypeScript typecheck', status: sandboxState.typecheck },
+    { label: 'Production build', status: sandboxState.compiler },
+    { label: 'Baseline unit tests (3/3)', status: sandboxState.baselineTests }
+  ];
 
   return (
     <aside
-      className="fixed top-13 right-0 bottom-18 w-[430px] max-w-[95vw] bg-[#FAF8F5]/95 backdrop-blur-xl border-l border-stone-200/90 shadow-2xl z-40 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 text-stone-800 rounded-bl-2xl"
+      aria-label="Verification inspector"
+      inert={!isInspectorOpen ? true : undefined}
+      className={`fixed top-14 right-0 bottom-0 w-[400px] max-w-full bg-white border-l border-[#E6E4DF] z-40 flex flex-col overflow-hidden text-[#141413] transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-[opacity] ${
+        isInspectorOpen
+          ? 'translate-x-0 opacity-100 pointer-events-auto'
+          : 'translate-x-full opacity-0 pointer-events-none motion-reduce:translate-x-0'
+      }`}
       style={{
-        boxShadow: '-8px 0 32px rgba(45, 35, 25, 0.08)'
+        boxShadow: '-4px 0 12px rgb(20 20 19 / 0.05)'
       }}
     >
-      {/* =========================================================================
-          1. INSPECTOR HEADER WITH WORKER QUICK-SWITCHER
-      ========================================================================= */}
-      <div className="p-3.5 border-b border-stone-200/80 bg-white/70 flex items-start justify-between gap-2">
-        <div className="space-y-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase bg-stone-100 text-stone-700 border border-stone-200/70 font-medium">
-              {roleBadge}
-            </span>
-            <span className="text-[11px] font-mono text-stone-500 flex items-center gap-1">
-              <Cpu className="w-3 h-3 text-stone-400" />
-              {modelBadge}
-            </span>
-          </div>
-          <h2 className="text-sm font-semibold text-stone-900 truncate leading-snug font-sans">{title}</h2>
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-[#E6E4DF] flex items-start justify-between gap-3 shrink-0">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-[-0.015em] text-[#141413] truncate">
+            {title}
+          </h2>
+          <p className="text-[12.5px] text-[#575550] mt-0.5 truncate">{subtitle}</p>
         </div>
 
-        {/* Cycle Workers + Close Button */}
         <div className="flex items-center gap-1 shrink-0">
+          {selectedAgent && (
+            <>
+              <button
+                type="button"
+                onClick={() => handleCycleCritic(-1)}
+                aria-label="Previous reviewer"
+                title="Previous reviewer"
+                className="h-7 w-7 rounded-md text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCycleCritic(1)}
+                aria-label="Next reviewer"
+                title="Next reviewer"
+                className="h-7 w-7 rounded-md text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </>
+          )}
           <button
-            onClick={() => handleCycleCritic(-1)}
-            className="p-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 border border-stone-200/70 transition-colors cursor-pointer"
-            title="Previous Critic Worker"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleCycleCritic(1)}
-            className="p-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 border border-stone-200/70 transition-colors cursor-pointer"
-            title="Next Critic Worker"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-          <button
+            type="button"
             onClick={() => setInspectorOpen(false)}
-            className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer ml-1"
-            title="Close Inspector"
+            aria-label="Close inspector"
+            title="Close inspector (Esc)"
+            className="h-7 w-7 rounded-md text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      {/* =========================================================================
-          2. LIVE THOUGHT / STATUS CALLOUT
-      ========================================================================= */}
+      {/* Live Thought Note */}
       {selectedAgent && (
-        <div className="px-3.5 py-2.5 bg-stone-100/60 border-b border-stone-200/70 flex items-start gap-2.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#C85A3E] shrink-0 mt-0.5" />
-          <div className="space-y-0.5 min-w-0">
-            <span className="text-[10px] uppercase font-mono tracking-wider text-stone-500 font-medium">
-              Worker Live Thought
-            </span>
-            <p className="text-xs text-stone-700 leading-relaxed font-sans italic">
-              &ldquo;{selectedAgent.currentThought}&rdquo;
-            </p>
-          </div>
+        <div className="px-5 py-3 bg-[#F6F5F2] border-b border-[#E6E4DF] shrink-0">
+          <p className="text-[13px] text-[#141413] leading-relaxed">
+            {selectedAgent.currentThought}
+          </p>
         </div>
       )}
 
-      {/* =========================================================================
-          3. TABS NAVIGATION (Proof Claim | Code & Diff | Sandbox | Audit Log)
-      ========================================================================= */}
-      <div className="flex border-b border-stone-200/80 bg-stone-100/50 p-1 gap-1">
-        <button
-          onClick={() => setActiveTab('claim')}
-          className={`flex-1 py-1.5 px-1.5 rounded-md text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'claim'
-              ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/60'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <ShieldAlert className="w-3 h-3 text-[#C85A3E] shrink-0" />
-          <span>Proofs</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('code')}
-          className={`flex-1 py-1.5 px-1.5 rounded-md text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'code'
-              ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/60'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <GitCompare className="w-3 h-3 text-stone-600 shrink-0" />
-          <span>Code Diff</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sandbox')}
-          className={`flex-1 py-1.5 px-1.5 rounded-md text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'sandbox'
-              ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/60'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <Server className="w-3 h-3 text-stone-600 shrink-0" />
-          <span>Sandbox</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex-1 py-1.5 px-1.5 rounded-md text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-            activeTab === 'history'
-              ? 'bg-white text-stone-900 shadow-2xs border border-stone-200/60'
-              : 'text-stone-500 hover:text-stone-900'
-          }`}
-        >
-          <History className="w-3 h-3 text-stone-600 shrink-0" />
-          <span>Audit ({auditLog.length})</span>
-        </button>
+      {/* Underline Tabs */}
+      <div className="border-b border-[#E6E4DF] px-5 flex items-center gap-5 shrink-0" role="tablist" aria-label="Inspector sections">
+        {[
+          { id: 'claim' as const, label: 'Proofs' },
+          { id: 'code' as const, label: 'Code' },
+          { id: 'sandbox' as const, label: 'Sandbox' },
+          { id: 'history' as const, label: `Activity (${auditLog.length})` }
+        ].map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors cursor-pointer whitespace-nowrap ${
+                active
+                  ? 'border-[#141413] text-[#141413]'
+                  : 'border-transparent text-[#575550] hover:text-[#141413]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* =========================================================================
-          4. TAB 1: PROOF CLAIM & EXECUTABLE ASSERTION
-      ========================================================================= */}
+      {/* Tab 1: Proofs */}
       {activeTab === 'claim' && activeFinding && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-          {/* Finding Selector Chips */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-              Council Findings ({findings.length}) &mdash; Click to Inspect
-            </span>
-            <div className="flex flex-col gap-1.5">
+        <div className="flex-1 overflow-y-auto cc-scroll p-5 space-y-5">
+          {/* Findings List */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[12px] font-medium text-[#6B6862]">
+              <span>Council findings</span>
+              <span className="tabular-nums">{findings.length}</span>
+            </div>
+
+            <div className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
               {findings.map((f) => {
                 const isSelectedFinding = f.id === activeFinding.id;
                 const isVerified = f.proofStatus === 'verified_reproduced';
                 const isRejected = f.proofStatus === 'rejected_no_proof';
 
                 return (
-                  <div
+                  <button
                     key={f.id}
+                    type="button"
                     onClick={() => selectFinding(f.id)}
-                    className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
-                      isSelectedFinding
-                        ? 'bg-amber-50/80 border-amber-400 shadow-xs'
-                        : 'bg-stone-50/80 border-stone-200 hover:bg-stone-100'
+                    className={`w-full px-3.5 py-2.5 text-left transition-colors cursor-pointer ${
+                      isSelectedFinding ? 'bg-[#F6F5F2]' : 'bg-white hover:bg-[#FAF9F7]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="font-bold text-stone-900 truncate">
-                        {f.criticName} <span className="font-normal text-stone-400">({f.criticRole})</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[13px] font-medium text-[#141413] truncate">
+                        {f.criticName}
                       </span>
                       <span
-                        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${
                           isVerified
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-[#ECFDF3] text-[#166534]'
                             : isRejected
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-stone-200 text-stone-600'
+                            ? 'bg-[#FEF2F2] text-[#991B1B]'
+                            : 'bg-[#F2F1EE] text-[#575550]'
                         }`}
                       >
-                        {isVerified ? '✓ Proof Verified' : isRejected ? '✕ Rejected (No Proof)' : 'Untested'}
+                        {isVerified ? 'Verified' : isRejected ? 'Filtered' : 'Pending'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-stone-600 line-clamp-1">{f.title}</p>
-                  </div>
+                    <p className="text-[12.5px] text-[#575550] truncate mt-0.5">{f.title}</p>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Active Finding Detail Card */}
-          <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
+          {/* Active Finding Details */}
+          <div className="space-y-4">
             <div>
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">
-                {activeFinding.cweCode || 'Vulnerability Detail'}
-              </span>
-              <h3 className="text-xs font-bold text-stone-900 mt-0.5 leading-snug">
+              <div className="text-[12px] font-medium text-[#6B6862]">
+                {activeFinding.cweCode || 'Finding details'}
+              </div>
+              <h3 className="text-[14px] font-semibold text-[#141413] mt-1 leading-snug">
                 {activeFinding.title}
               </h3>
-              <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
+              <p className="text-[13px] text-[#575550] mt-1.5 leading-relaxed">
                 {activeFinding.description}
               </p>
             </div>
 
-            {/* Proposed Executable Assertion */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1">
-                <Terminal className="w-3 h-3 text-amber-600" />
-                Proposed Executable Proof Assertion
-              </span>
-              <pre className="p-2.5 rounded-lg bg-stone-900 text-stone-100 text-[11px] font-mono overflow-x-auto leading-relaxed border border-stone-800">
+            <div className="space-y-1.5">
+              <div className="text-[12px] font-medium text-[#6B6862]">
+                Executable assertion
+              </div>
+              <pre className="p-3.5 rounded-xl bg-[#F6F5F2] border border-[#E6E4DF] text-[#141413] text-[12.5px] leading-relaxed overflow-x-auto cc-scroll whitespace-pre-wrap">
                 {activeFinding.proposedAssertion}
               </pre>
             </div>
 
-            {/* Proof Gate Outcome */}
-            <div className="space-y-1 pt-1 border-t border-stone-200">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-                Proof Gate Verification Result
-              </span>
+            <div className="space-y-1.5">
+              <div className="text-[12px] font-medium text-[#6B6862]">
+                Proof gate result
+              </div>
               <div
-                className={`p-2.5 rounded-lg text-[11px] font-mono leading-relaxed border ${
+                className={`p-3 rounded-xl border text-[12.5px] leading-relaxed flex items-start gap-2.5 ${
                   activeFinding.proofStatus === 'verified_reproduced'
-                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                    ? 'bg-[#ECFDF3] border-[#BBF7D0] text-[#166534]'
                     : activeFinding.proofStatus === 'rejected_no_proof'
-                    ? 'bg-rose-50 text-rose-900 border-rose-300'
-                    : 'bg-stone-100 text-stone-600 border-stone-200'
+                    ? 'bg-[#FEF2F2] border-[#FECACA] text-[#991B1B]'
+                    : 'bg-[#F6F5F2] border-[#E6E4DF] text-[#575550]'
                 }`}
               >
-                {activeFinding.proofStatus === 'verified_reproduced'
-                  ? `✅ ${activeFinding.sandboxOutput}`
-                  : activeFinding.proofStatus === 'rejected_no_proof'
-                  ? `❌ ${activeFinding.sandboxOutput}`
-                  : '⏳ Step to "Proof Gate" stage to execute assertion against isolated sandbox...'}
+                {activeFinding.proofStatus === 'verified_reproduced' ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                ) : activeFinding.proofStatus === 'rejected_no_proof' ? (
+                  <XCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                ) : (
+                  <Clock className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                )}
+                <span>
+                  {activeFinding.proofStatus === 'untested'
+                    ? 'Advance to Proof gate to run this assertion in the sandbox.'
+                    : activeFinding.sandboxOutput}
+                </span>
               </div>
             </div>
 
-            {/* Main Agent Arbitration */}
             {activeFinding.arbitrationOutcome !== 'pending' && (
-              <div className="space-y-1 pt-1 border-t border-stone-200">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1">
-                  <Bot className="w-3 h-3 text-indigo-600" />
-                  Main Arbiter Verdict (Loop {Math.max(1, revisionLoop)}/2)
-                </span>
-                <p className="text-[11px] font-sans text-stone-800 bg-indigo-50/70 p-2 rounded-lg border border-indigo-200 leading-relaxed">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[12px] font-medium text-[#6B6862]">
+                  <span>Main Arbiter decision</span>
+                  <span className="tabular-nums">Loop {Math.max(1, revisionLoop)} of 2</span>
+                </div>
+                <p className="p-3 rounded-xl bg-[#F6F5F2] border border-[#E6E4DF] text-[13px] text-[#141413] leading-relaxed">
                   {activeFinding.arbitrationReason}
                 </p>
               </div>
@@ -324,189 +314,129 @@ export const ContextualInspector: React.FC = () => {
         </div>
       )}
 
-      {/* =========================================================================
-          5. TAB 2: CODE & SYNTAX DIFF
-      ========================================================================= */}
+      {/* Tab 2: Code */}
       {activeTab === 'code' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
-          {/* Sub-mode selector */}
-          <div className="flex bg-stone-100 p-0.5 rounded-lg border border-stone-200 text-[11px]">
-            <button
-              onClick={() => setCodeViewMode('diff')}
-              className={`flex-1 py-1 rounded font-medium transition-all cursor-pointer ${
-                codeViewMode === 'diff' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500'
-              }`}
-            >
-              Unified Diff
-            </button>
-            <button
-              onClick={() => setCodeViewMode('initial')}
-              className={`flex-1 py-1 rounded font-medium transition-all cursor-pointer ${
-                codeViewMode === 'initial' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500'
-              }`}
-            >
-              Vulnerable
-            </button>
-            <button
-              onClick={() => setCodeViewMode('patched')}
-              className={`flex-1 py-1 rounded font-medium transition-all cursor-pointer ${
-                codeViewMode === 'patched' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500'
-              }`}
-            >
-              Patched
-            </button>
-            <button
-              onClick={() => setCodeViewMode('exploit_test')}
-              className={`flex-1 py-1 rounded font-medium transition-all cursor-pointer ${
-                codeViewMode === 'exploit_test' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500'
-              }`}
-            >
-              Proof Test
-            </button>
+        <div className="flex-1 overflow-y-auto cc-scroll p-5 space-y-4">
+          <div className="flex bg-[#F2F1EE] p-0.5 rounded-lg text-[12.5px]">
+            {[
+              { id: 'diff' as const, label: 'Diff' },
+              { id: 'initial' as const, label: 'Before' },
+              { id: 'patched' as const, label: 'After' },
+              { id: 'exploit_test' as const, label: 'Test' }
+            ].map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setCodeViewMode(mode.id)}
+                className={`flex-1 py-1.5 rounded-[6px] font-medium transition-colors cursor-pointer ${
+                  codeViewMode === mode.id
+                    ? 'bg-white text-[#141413] border border-[#E6E4DF]'
+                    : 'text-[#575550] hover:text-[#141413] border border-transparent'
+                }`}
+              >
+                {mode.label}
+              </button>
+            ))}
           </div>
 
-          <div className="text-[10px] font-mono text-stone-500 flex items-center gap-1">
-            <FileCode2 className="w-3.5 h-3.5 text-stone-400" />
-            <span>{scenario.filePath}</span>
+          <div className="flex items-center gap-1.5 text-[12.5px] text-[#575550]">
+            <FileCode2 className="w-3.5 h-3.5 text-[#6B6862] shrink-0" aria-hidden="true" />
+            <span className="truncate">{scenario.filePath}</span>
           </div>
 
-          {/* Syntax Display Box */}
-          <div className="rounded-xl overflow-hidden border border-stone-800 bg-[#14161C] text-stone-200">
-            <div className="px-3 py-1.5 bg-[#1C1F26] border-b border-stone-800 flex items-center justify-between text-[10px] text-stone-400 font-mono">
-              <span>TypeScript Express Endpoint</span>
-              <span>{codeViewMode.toUpperCase()}</span>
-            </div>
-            <pre className="p-3 text-[11px] font-mono overflow-x-auto leading-relaxed max-h-[460px]">
-              {codeViewMode === 'diff' ? (
-                <>
-                  <span className="text-stone-500">@@ -18,10 +18,18 @@</span>
-                  {'\n'}
-                  <span className="text-stone-400">
-                    {' '}invoiceRouter.get(&apos;/:id&apos;, requireAuth, async (req, res) =&gt; &#123;
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">
-                    + const userOrgId = req.user?.organizationId;
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">
-                    + if (!userOrgId) throw new ForbiddenError(&apos;Missing org context&apos;);
-                  </span>
-                  {'\n'}
-                  <span className="text-stone-400">
-                    {' '} const invoice = await db.invoices.findUnique(&#123; where: &#123; id &#125; &#125;);
-                  </span>
-                  {'\n'}
-                  <span className="text-rose-400">
-                    - // Missing tenant ownership verification!
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">
-                    + // ✅ CouncilCode Verified Guard:
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">
-                    + if (invoice.organizationId !== userOrgId) &#123;
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">
-                    + return res.status(403).json(&#123; error: &apos;Forbidden&apos; &#125;);
-                  </span>
-                  {'\n'}
-                  <span className="text-emerald-400">+ &#125;</span>
-                  {'\n'}
-                  <span className="text-stone-400">
-                    {' '} return res.status(200).json(&#123; invoice &#125;);
-                  </span>
-                  {'\n'}
-                  <span className="text-stone-400">&#125;);</span>
-                </>
-              ) : codeViewMode === 'initial' ? (
-                scenario.initialCode
-              ) : codeViewMode === 'patched' ? (
-                scenario.patchedCode
-              ) : (
-                scenario.exploitTestCode
-              )}
-            </pre>
+          <div className="rounded-xl border border-[#E6E4DF] bg-[#FAF9F7] overflow-hidden">
+            {codeViewMode === 'diff' ? (
+              <div className="py-2 overflow-x-auto cc-scroll text-[12.5px] leading-[1.6]">
+                {DIFF_LINES.map((line, idx) => (
+                  <div
+                    key={idx}
+                    className={`px-3.5 py-0.5 whitespace-pre ${
+                      line.type === 'add'
+                        ? 'bg-[#ECFDF3] text-[#14532D]'
+                        : line.type === 'remove'
+                        ? 'bg-[#FEF2F2] text-[#991B1B]'
+                        : line.type === 'meta'
+                        ? 'text-[#6B6862]'
+                        : 'text-[#575550]'
+                    }`}
+                  >
+                    {line.text}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <pre className="p-3.5 text-[12.5px] leading-[1.6] text-[#141413] overflow-x-auto cc-scroll whitespace-pre">
+                {codeViewMode === 'initial'
+                  ? scenario.initialCode
+                  : codeViewMode === 'patched'
+                  ? scenario.patchedCode
+                  : scenario.exploitTestCode}
+              </pre>
+            )}
           </div>
         </div>
       )}
 
-      {/* =========================================================================
-          6. TAB 3: DETERMINISTIC SANDBOX STATUS
-      ========================================================================= */}
+      {/* Tab 3: Sandbox */}
       {activeTab === 'sandbox' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
-          <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-stone-900">Zero-Token Fast-Fail Gate</span>
+        <div className="flex-1 overflow-y-auto cc-scroll p-5 space-y-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-[14px] font-semibold text-[#141413]">
+                Fast-fail sandbox gate
+              </h3>
               <span
-                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${
                   sandboxState.status === 'passed'
-                    ? 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-[#ECFDF3] text-[#166534]'
                     : sandboxState.status === 'running'
-                    ? 'bg-amber-100 text-amber-800 animate-pulse'
-                    : 'bg-stone-200 text-stone-600'
+                    ? 'bg-[#FFFBEB] text-[#92400E]'
+                    : 'bg-[#F2F1EE] text-[#575550]'
                 }`}
               >
                 {sandboxState.status}
               </span>
             </div>
-            <p className="text-[11px] text-stone-600 leading-relaxed">
-              CouncilCode executes deterministic compiler, linter, and baseline test checks first.
-              AI token spend is blocked if code fails basic syntax or compilation.
+            <p className="text-[13px] text-[#575550] leading-relaxed">
+              Runs deterministic linter, typecheck, build, and unit tests before any AI reviewer spends tokens.
             </p>
-
-            {/* Checklist */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-white border border-stone-200">
-                <CheckCircle2
-                  className={`w-3.5 h-3.5 ${
-                    sandboxState.linter === 'passed' ? 'text-emerald-600' : 'text-stone-400'
-                  }`}
-                />
-                <span className="text-stone-700">ESLint / Biome</span>
-              </div>
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-white border border-stone-200">
-                <CheckCircle2
-                  className={`w-3.5 h-3.5 ${
-                    sandboxState.typecheck === 'passed' ? 'text-emerald-600' : 'text-stone-400'
-                  }`}
-                />
-                <span className="text-stone-700">TypeScript tsc</span>
-              </div>
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-white border border-stone-200">
-                <CheckCircle2
-                  className={`w-3.5 h-3.5 ${
-                    sandboxState.compiler === 'passed' ? 'text-emerald-600' : 'text-stone-400'
-                  }`}
-                />
-                <span className="text-stone-700">Build Clean</span>
-              </div>
-              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-white border border-stone-200">
-                <CheckCircle2
-                  className={`w-3.5 h-3.5 ${
-                    sandboxState.baselineTests === 'passed' ? 'text-emerald-600' : 'text-stone-400'
-                  }`}
-                />
-                <span className="text-stone-700">Unit Tests (3/3)</span>
-              </div>
-            </div>
           </div>
 
-          {/* Sandbox Terminal Stream */}
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-              Live Sandbox Output Stream
-            </span>
-            <div className="p-3 rounded-xl bg-stone-900 text-stone-100 font-mono text-[11px] space-y-1 overflow-x-auto max-h-[300px]">
+          <div className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
+            {sandboxChecks.map((check) => (
+              <div
+                key={check.label}
+                className="px-3.5 py-2.5 bg-white flex items-center justify-between gap-2 text-[13px]"
+              >
+                <span className="text-[#141413]">{check.label}</span>
+                <span
+                  className={`text-[12px] font-medium capitalize ${
+                    check.status === 'passed'
+                      ? 'text-[#166534]'
+                      : check.status === 'running'
+                      ? 'text-[#92400E]'
+                      : 'text-[#6B6862]'
+                  }`}
+                >
+                  {check.status}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="text-[12px] font-medium text-[#6B6862]">Output log</div>
+            <div className="p-3.5 rounded-xl bg-[#F6F5F2] border border-[#E6E4DF] text-[12.5px] space-y-1.5 overflow-x-auto cc-scroll">
               {sandboxState.details.map((line, idx) => (
-                <div key={idx} className="flex items-start gap-2 leading-relaxed">
-                  <span className="text-stone-500 select-none">&gt;</span>
-                  <span className={line.includes('✅') || line.includes('PASS') ? 'text-emerald-400' : 'text-stone-300'}>
-                    {line}
-                  </span>
+                <div
+                  key={idx}
+                  className={`leading-relaxed ${
+                    line.includes('Clean') || line.includes('PASS') || line.includes('green') || line.includes('cleared')
+                      ? 'text-[#166534] font-medium'
+                      : 'text-[#575550]'
+                  }`}
+                >
+                  {line}
                 </div>
               ))}
             </div>
@@ -514,60 +444,38 @@ export const ContextualInspector: React.FC = () => {
         </div>
       )}
 
-      {/* =========================================================================
-          7. TAB 4: CHRONOLOGICAL AUDIT LOG
-      ========================================================================= */}
+      {/* Tab 4: Activity */}
       {activeTab === 'history' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-              Verification Event Log ({auditLog.length})
-            </span>
-            <span className="text-[10px] font-mono text-stone-400">Latest first</span>
+        <div className="flex-1 overflow-y-auto cc-scroll p-5 space-y-3">
+          <div className="flex items-center justify-between text-[12px] font-medium text-[#6B6862]">
+            <span>Verification activity</span>
+            <span>Latest first</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
             {auditLog.map((evt) => (
-              <div
-                key={evt.id}
-                className="p-2.5 rounded-xl bg-white border border-stone-200/80 space-y-1 shadow-2xs"
-              >
-                <div className="flex items-center justify-between gap-2">
+              <div key={evt.id} className="p-3.5 bg-white space-y-1">
+                <div className="flex items-center justify-between gap-2 text-[12px]">
                   <span
-                    className={`text-[9.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                    className={`font-medium ${
                       evt.type === 'success'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'text-[#166534]'
                         : evt.type === 'warning'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-stone-100 text-stone-700'
+                        ? 'text-[#92400E]'
+                        : 'text-[#6B6862]'
                     }`}
                   >
-                    {evt.source}
+                    {evt.source.replace('_', ' ')}
                   </span>
-                  <span className="text-[10px] font-mono text-stone-400">{evt.timestamp}</span>
+                  <span className="text-[#6B6862] tabular-nums">{evt.timestamp}</span>
                 </div>
-                <div className="font-semibold text-stone-900 text-xs">{evt.title}</div>
-                <p className="text-[11px] text-stone-600 leading-relaxed">{evt.description}</p>
+                <div className="text-[13px] font-semibold text-[#141413]">{evt.title}</div>
+                <p className="text-[12.5px] text-[#575550] leading-relaxed">{evt.description}</p>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* =========================================================================
-          8. INSPECTOR FOOTER
-      ========================================================================= */}
-      <div className="p-3 border-t border-stone-200 bg-stone-50/90 flex items-center justify-between text-xs">
-        <span className="text-[11px] text-stone-500 font-mono">
-          CouncilCode Proof Harness v2.5
-        </span>
-        <button
-          onClick={() => setInspectorOpen(false)}
-          className="px-3 py-1.5 rounded-lg bg-stone-200 hover:bg-stone-300 text-stone-800 font-semibold transition-colors cursor-pointer"
-        >
-          Close Drawer
-        </button>
-      </div>
     </aside>
   );
 };

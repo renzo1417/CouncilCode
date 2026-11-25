@@ -18,10 +18,10 @@ const OfficeCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#FAF8F5] text-stone-600 gap-3">
-        <Loader2 className="w-7 h-7 animate-spin text-[#D97059]" />
-        <p className="text-xs font-mono tracking-wider text-stone-500 uppercase">
-          Sculpting Scandinavian Clay Studio Diorama...
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#F5F5F4] text-[#575550] gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-[#141413]" />
+        <p className="text-[13px] font-medium text-[#575550]">
+          Loading studio...
         </p>
       </div>
     )
@@ -33,14 +33,37 @@ export default function Home() {
   const stepBackward = useCouncilStore((state) => state.stepBackward);
   const togglePlayPause = useCouncilStore((state) => state.togglePlayPause);
   const resetWorkflow = useCouncilStore((state) => state.resetWorkflow);
+  const isAddCriticOpen = useCouncilStore((state) => state.isAddCriticOpen);
+  const isPRSummaryOpen = useCouncilStore((state) => state.isPRSummaryOpen);
+  const isMultiDevModalOpen = useCouncilStore((state) => state.isMultiDevModalOpen);
+  const isInspectorOpen = useCouncilStore((state) => state.isInspectorOpen);
+  const setInspectorOpen = useCouncilStore((state) => state.setInspectorOpen);
+  const isRosterOpen = useCouncilStore((state) => state.isRosterOpen);
+  const setRosterOpen = useCouncilStore((state) => state.setRosterOpen);
 
   // Keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      const targetTag = (e.target as HTMLElement)?.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag)) {
         return;
       }
+
+      if (isAddCriticOpen || isPRSummaryOpen || isMultiDevModalOpen) {
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (isInspectorOpen) {
+          setInspectorOpen(false);
+          return;
+        }
+        if (isRosterOpen) {
+          setRosterOpen(false);
+          return;
+        }
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
         togglePlayPause();
@@ -57,28 +80,32 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [stepForward, stepBackward, togglePlayPause, resetWorkflow]);
+  }, [
+    stepForward,
+    stepBackward,
+    togglePlayPause,
+    resetWorkflow,
+    isAddCriticOpen,
+    isPRSummaryOpen,
+    isMultiDevModalOpen,
+    isInspectorOpen,
+    setInspectorOpen,
+    isRosterOpen,
+    setRosterOpen
+  ]);
 
   return (
-    <main className="w-screen h-screen flex flex-col overflow-hidden bg-[#FAF8F5] text-stone-800 select-none relative font-sans">
-      {/* Top Editorial Navigation Bar */}
+    <main className="w-screen h-screen flex flex-col overflow-hidden bg-[#F5F5F4] text-[#141413] select-none relative font-sans">
       <Header />
 
-      {/* Hero 3D Diorama Viewport */}
-      <div className="flex-1 h-full relative overflow-hidden bg-[#FAF8F5]">
+      <div className="flex-1 h-full relative overflow-hidden bg-[#F3F3F1]">
         <OfficeCanvas />
-
-        {/* Collapsible Left Studio Navigator & Workers Roster Dock */}
         <StudioRosterDock />
-
-        {/* Slide-over Contextual Inspector Drawer */}
         <ContextualInspector />
       </div>
 
-      {/* Floating Bottom Timeline Stepper & Controls */}
       <BottomTimeline />
 
-      {/* Interactive Modals */}
       <AddCriticModal />
       <PRSummaryModal />
       <MultiDevModal />

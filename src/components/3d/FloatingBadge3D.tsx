@@ -63,13 +63,13 @@ export const FloatingBadge3D: React.FC<FloatingBadge3DProps> = ({
   const [hovered, setHovered] = useState(false);
 
   const isAction = variant === 'action';
-  const worldWidth = width ?? (isAction ? 0.72 : 1.25);
+  const worldWidth = width ?? (isAction ? 0.82 : 1.25);
   const worldHeight = height ?? (isAction ? 0.2 : 0.28);
 
   const texture = useMemo(() => {
     if (typeof document === 'undefined') return null;
 
-    const canvasWidth = isAction ? 360 : 560;
+    const canvasWidth = isAction ? 400 : 560;
     const canvasHeight = isAction ? 100 : 124;
 
     const canvas = document.createElement('canvas');
@@ -88,109 +88,88 @@ export const FloatingBadge3D: React.FC<FloatingBadge3DProps> = ({
     const pillH = canvasHeight - 12;
     const radius = pillH / 2;
 
-    // Background & Border styling
-    let bgColor = 'rgba(250, 248, 245, 0.95)';
-    let borderColor = 'rgba(214, 211, 209, 0.95)';
-    let borderWidth = 3.5;
-    let titleColor = '#1C1917';
-    let tagBg = statusTagBg || 'rgba(231, 229, 228, 0.85)';
-    let tagText = statusTagText || '#57534E';
+    let bgColor = 'rgba(255, 255, 255, 0.94)';
+    let borderColor = 'rgba(212, 209, 202, 0.95)';
+    let borderWidth = 2.5;
+    let titleColor = '#141413';
+    let tagBg = statusTagBg || 'rgba(242, 241, 238, 0.95)';
+    let tagText = statusTagText || '#575550';
 
     if (isAction) {
-      bgColor = 'rgba(255, 251, 235, 0.95)';
-      borderColor = 'rgba(245, 158, 11, 0.9)';
-      borderWidth = 3.5;
-      titleColor = '#78350F';
+      bgColor = 'rgba(255, 255, 255, 0.95)';
+      borderColor = '#D4D1CA';
+      borderWidth = 2.5;
+      titleColor = '#141413';
     } else if (isAlert) {
-      bgColor = 'rgba(69, 10, 10, 0.95)';
-      borderColor = '#F87171';
-      borderWidth = 4.5;
-      titleColor = '#FEE2E2';
-      tagBg = 'rgba(239, 68, 68, 0.35)';
-      tagText = '#FECACA';
+      bgColor = 'rgba(254, 242, 242, 0.97)';
+      borderColor = '#DC2626';
+      borderWidth = 3.5;
+      titleColor = '#991B1B';
+      tagBg = 'rgba(254, 226, 226, 0.95)';
+      tagText = '#991B1B';
     } else if (isSelected) {
-      bgColor = 'rgba(24, 24, 27, 0.96)';
-      borderColor = '#F59E0B';
-      borderWidth = 4.5;
+      bgColor = 'rgba(20, 20, 19, 0.96)';
+      borderColor = '#141413';
+      borderWidth = 3;
       titleColor = '#FFFFFF';
-      tagBg = 'rgba(255, 255, 255, 0.18)';
-      tagText = '#FDE68A';
+      tagBg = 'rgba(255, 255, 255, 0.16)';
+      tagText = '#F6F5F2';
     }
 
-    // Outer glow for selected or alert
-    if (isSelected || isAlert) {
-      ctx.save();
-      ctx.shadowColor = isAlert ? 'rgba(239, 68, 68, 0.45)' : 'rgba(245, 158, 11, 0.45)';
-      ctx.shadowBlur = 12;
-      drawPill(ctx, pillX, pillY, pillW, pillH, radius);
-      ctx.fillStyle = bgColor;
-      ctx.fill();
-      ctx.restore();
-    } else {
-      drawPill(ctx, pillX, pillY, pillW, pillH, radius);
-      ctx.fillStyle = bgColor;
-      ctx.fill();
-    }
+    drawPill(ctx, pillX, pillY, pillW, pillH, radius);
+    ctx.fillStyle = bgColor;
+    ctx.fill();
 
-    // Border
     ctx.lineWidth = borderWidth;
     ctx.strokeStyle = borderColor;
     ctx.stroke();
 
+    const sansFamily = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
     if (isAction) {
-      // Action badge (e.g. + Desk #4)
-      ctx.font = 'bold 30px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.font = `600 28px ${sansFamily}`;
       ctx.fillStyle = titleColor;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(title, canvasWidth / 2, canvasHeight / 2);
     } else {
-      // Regular badge with dot, title, and optional subtitle tag
       const centerY = canvasHeight / 2;
 
-      // Status dot
       let titleStartX = 34;
       if (dotColor) {
         const dotX = 42;
-        const dotRadius = 11;
+        const dotRadius = 10;
         ctx.beginPath();
         ctx.arc(dotX, centerY, dotRadius, 0, Math.PI * 2);
-        ctx.fillStyle = isAlert ? '#EF4444' : dotColor;
+        ctx.fillStyle = isAlert ? '#DC2626' : dotColor;
         ctx.fill();
 
-        // Subtle inner ring on dot
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-        ctx.stroke();
-
-        titleStartX = 66;
+        titleStartX = 64;
       }
 
-      // Subtitle status tag (on right)
       let tagLeftX = canvasWidth - 20;
       if (subtitle) {
-        ctx.font = 'bold 20px ui-monospace, SFMono-Regular, Menlo, monospace';
-        const subUpper = subtitle.toUpperCase();
-        const tagTextWidth = ctx.measureText(subUpper).width;
-        const tagPadX = 14;
-        const tagW = Math.max(tagTextWidth + tagPadX * 2, 70);
+        ctx.font = `500 22px ${sansFamily}`;
+        const formattedSub = subtitle.charAt(0).toUpperCase() + subtitle.slice(1);
+        const tagTextWidth = ctx.measureText(formattedSub).width;
+        const tagPadX = 16;
+        const tagW = Math.max(tagTextWidth + tagPadX * 2, 76);
         const tagH = 42;
         tagLeftX = canvasWidth - tagW - 20;
         const tagY = (canvasHeight - tagH) / 2;
 
-        drawPill(ctx, tagLeftX, tagY, tagW, tagH, 8);
+        drawPill(ctx, tagLeftX, tagY, tagW, tagH, tagH / 2);
         ctx.fillStyle = tagBg;
         ctx.fill();
 
         ctx.fillStyle = tagText;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(subUpper, tagLeftX + tagW / 2, centerY + 1);
+        ctx.fillText(formattedSub, tagLeftX + tagW / 2, centerY + 1);
       }
 
-      // Title text (in middle)
       const maxTitleW = tagLeftX - titleStartX - 16;
-      ctx.font = '600 27px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.font = `600 27px ${sansFamily}`;
       ctx.fillStyle = titleColor;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
@@ -262,7 +241,7 @@ export const FloatingBadge3D: React.FC<FloatingBadge3DProps> = ({
           document.body.style.cursor = 'auto';
           setHovered(false);
         }}
-        scale={hovered ? [1.08, 1.08, 1] : [1, 1, 1]}
+        scale={hovered ? [1.06, 1.06, 1] : [1, 1, 1]}
       >
         <planeGeometry args={[worldWidth, worldHeight]} />
         {texture ? (

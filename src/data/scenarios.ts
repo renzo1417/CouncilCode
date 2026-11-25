@@ -28,7 +28,7 @@ invoiceRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Invoice not found' });
   }
 
-  // ⚠️ VULNERABILITY: Missing tenant ownership verification!
+  // Vulnerability: Missing tenant ownership verification.
   // Any authenticated user can read any invoice by guessing or iterating IDs.
   return res.status(200).json({ invoice });
 });`,
@@ -59,7 +59,7 @@ invoiceRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
     throw new NotFoundError(\`Invoice '\${id}' not found\`);
   }
 
-  // ✅ COUNCILCODE VERIFIED FIX:
+  // CouncilCode verified fix:
   // Enforce tenant boundary. Cross-tenant access throws 403 Forbidden.
   if (invoice.organizationId !== userOrgId) {
     return res.status(403).json({

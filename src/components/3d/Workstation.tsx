@@ -250,9 +250,9 @@ export const Workstation: React.FC<WorkstationProps> = ({
               </mesh>
               <FloatingBadge3D
                 position={[0, 0.32, -0.15]}
-                title={`+ Desk #${deskIndex + 1}`}
+                title="+ Add reviewer"
                 variant="action"
-                width={0.72}
+                width={0.82}
                 height={0.2}
                 onClick={() => setAddCriticOpen(true)}
               />

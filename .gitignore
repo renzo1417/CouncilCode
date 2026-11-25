@@ -39,3 +39,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI / agent tooling & generated outputs
+/.agents/
+/graphify-out/
+/.taste-skill/
+/.claude/
+/.cursor/
+/.gemini/
+
+# local verification screenshots
+test_render_*.png
+test_screenshot_*.png
+
+# editor & OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+Thumbs.db
+*.log

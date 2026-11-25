@@ -2,15 +2,10 @@
 
 import React, { useState } from 'react';
 import { useCouncilStore } from '@/store/councilStore';
-import {
-  GitPullRequest,
-  CheckCircle2,
-  ShieldCheck,
-  X,
-  Check
-} from 'lucide-react';
+import { GitPullRequest, CheckCircle2, X, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playSound } from '@/utils/sound';
+import { ModalDialog } from './ModalDialog';
 
 export const PRSummaryModal: React.FC = () => {
   const isPRSummaryOpen = useCouncilStore((state) => state.isPRSummaryOpen);
@@ -20,156 +15,153 @@ export const PRSummaryModal: React.FC = () => {
 
   const [isMerged, setIsMerged] = useState(false);
 
-  if (!isPRSummaryOpen) return null;
-
   const handleMerge = () => {
     setIsMerged(true);
     if (soundEnabled) playSound('pr_success');
     confetti({
-      particleCount: 120,
-      spread: 70,
+      particleCount: 100,
+      spread: 65,
       origin: { y: 0.6 }
     });
   };
 
   const isVerified = workflowState === 'VERIFIED' || workflowState === 'PR_READY';
 
+  const auditItems = [
+    { label: 'Deterministic sandbox fast-fail gate', result: '4 of 4 passed', ok: true },
+    { label: 'Cross-vendor critic council consensus', result: '1 proof verified', ok: true },
+    { label: 'Executable exploit reproduction & patch', result: 'Reproduced & fixed', ok: true },
+    { label: 'Unproved style claims filtered', result: '1 claim blocked', ok: false }
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div
-        className="bg-[#FAF8F5] border border-stone-200/90 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-stone-800"
-        style={{
-          boxShadow: '0 20px 48px -8px rgba(45, 35, 25, 0.16)'
-        }}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-stone-200/80 flex items-center justify-between bg-white/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-[#0D5F3A]">
-              <GitPullRequest className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-stone-500">councilcode / billing-service</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-medium bg-emerald-100 text-[#0D5F3A] border border-emerald-200">
-                  {isMerged ? 'MERGED' : isVerified ? 'VERIFIED GREEN' : 'INSPECTION'}
-                </span>
-              </div>
-              <h2 className="text-sm font-semibold text-stone-900 mt-0.5 font-sans">
-                Pull Request #42: fix(api): enforce tenant isolation on invoice lookup
-              </h2>
-            </div>
-          </div>
-          <button
-            onClick={() => setPRSummaryOpen(false)}
-            className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Content Body */}
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-          {/* Status Box */}
-          <div
-            className={`p-3.5 rounded-xl border flex items-start gap-3 ${
-              isVerified
-                ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
-                : 'bg-stone-100/70 border-stone-200 text-stone-800'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-[#0D5F3A]" />
-            <div>
-              <h3 className="text-xs font-semibold text-stone-900">
-                CouncilCode Proof-Gated Verification Complete
-              </h3>
-              <p className="text-[11px] text-stone-600 mt-0.5 leading-relaxed">
-                One clean, green-tested PR ready for human sign-off. AI critics proved vulnerabilities with executable test evidence in the deterministic sandbox kiln.
-              </p>
-            </div>
-          </div>
-
-          {/* Verification Audit Checklist */}
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-mono font-medium text-stone-500 uppercase tracking-wider">
-              Verification Audit Checklist
-            </h4>
-            <div className="space-y-1.5 text-xs">
-              <div className="p-2.5 rounded-lg bg-white border border-stone-200/80 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-stone-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0D5F3A]" />
-                  <span>Deterministic Sandbox (Zero-Token Fast Fail)</span>
-                </span>
-                <span className="font-mono text-[#0D5F3A] text-[11px] font-medium">4/4 Passed</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-white border border-stone-200/80 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-stone-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0D5F3A]" />
-                  <span>Cross-Vendor Critic Council Consensus</span>
-                </span>
-                <span className="font-mono text-[#0D5F3A] text-[11px] font-medium">1 Proof Verified</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-white border border-stone-200/80 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-stone-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0D5F3A]" />
-                  <span>Proof Gate Executable Assertion</span>
-                </span>
-                <span className="font-mono text-[#0D5F3A] text-[11px] font-medium">Exploit Reproduced &amp; Patched</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-white border border-stone-200/80 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-stone-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-stone-400" />
-                  <span>Unverified Noise &amp; Hallucinations Filtered Out</span>
-                </span>
-                <span className="font-mono text-stone-500 text-[11px]">1 Noise Claim Blocked</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Cryptographic Proof Audit Trail */}
-          <div className="p-3 rounded-lg bg-white border border-stone-200/80 text-[11px] font-mono space-y-1">
-            <div className="text-stone-500 flex items-center justify-between">
-              <span>Cryptographic Audit Digest:</span>
-              <span className="text-stone-700 font-semibold">SHA256-ED25519</span>
-            </div>
-            <div className="text-stone-600 text-[10px] break-all bg-stone-50 p-1.5 rounded border border-stone-200/60">
-              cc_proof_9f82d1c6e4a05b387921a94e823b1029c784e1f6a5b9c0d2e4f6
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Actions */}
-        <div className="px-5 py-3.5 border-t border-stone-200/80 bg-white/70 flex items-center justify-between">
-          <div className="text-xs text-stone-500">
-            Reviewer: <span className="text-stone-900 font-medium">Human Tech Lead</span>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPRSummaryOpen(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-100 border border-stone-200 transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-
-            <button
-              onClick={handleMerge}
-              disabled={isMerged}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-[0.98] ${
-                isMerged
-                  ? 'bg-stone-100 text-[#0D5F3A] border border-emerald-300 cursor-default'
-                  : 'bg-[#0D5F3A] hover:bg-[#0A4B2E] text-white'
+    <ModalDialog
+      open={isPRSummaryOpen}
+      onClose={() => setPRSummaryOpen(false)}
+      titleId="pr-summary-title"
+      maxWidthClass="max-w-xl"
+    >
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-[#E6E4DF] flex items-start justify-between gap-3 shrink-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-[12px] text-[#575550]">
+            <span>councilcode / billing-service</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                isMerged || isVerified
+                  ? 'bg-[#ECFDF3] text-[#166534]'
+                  : 'bg-[#F2F1EE] text-[#575550]'
               }`}
             >
-              {isMerged ? <Check className="w-3.5 h-3.5" /> : <GitPullRequest className="w-3.5 h-3.5" />}
-              <span>{isMerged ? 'Pull Request Merged' : '1-Click Merge (Verified PR)'}</span>
-            </button>
+              {isMerged ? 'Merged' : isVerified ? 'Verified green' : 'Preview'}
+            </span>
+          </div>
+          <h2 id="pr-summary-title" className="text-[16px] font-semibold text-[#141413] mt-1 leading-snug">
+            Pull Request #42: Enforce tenant isolation on invoice lookup
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setPRSummaryOpen(false)}
+          aria-label="Close modal"
+          className="h-8 w-8 rounded-lg text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 space-y-5 overflow-y-auto cc-scroll">
+        <div
+          className={`p-3.5 rounded-xl border text-[13px] leading-relaxed ${
+            isVerified
+              ? 'bg-[#ECFDF3] border-[#BBF7D0] text-[#166534]'
+              : 'bg-[#F6F5F2] border-[#E6E4DF] text-[#575550]'
+          }`}
+        >
+          <div className="font-semibold text-[#141413]">
+            {isVerified ? 'Proof-gated verification complete' : 'Verification in progress'}
+          </div>
+          <p className="mt-0.5">
+            One clean, green-tested pull request ready for human sign-off. Only reproducible bugs backed by sandbox assertions reached this PR.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-[12px] font-medium text-[#6B6862]">
+            Verification checklist
+          </div>
+          <div className="border border-[#E6E4DF] rounded-xl divide-y divide-[#EFECE6] overflow-hidden">
+            {auditItems.map((item) => (
+              <div
+                key={item.label}
+                className="px-4 py-3 bg-white flex items-center justify-between gap-3 text-[13px]"
+              >
+                <span className="flex items-center gap-2.5 text-[#141413] min-w-0">
+                  <CheckCircle2
+                    className={`w-4 h-4 shrink-0 ${item.ok ? 'text-[#15803D]' : 'text-[#6B6862]'}`}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.label}</span>
+                </span>
+                <span
+                  className={`text-[12.5px] font-medium tabular-nums shrink-0 ${
+                    item.ok ? 'text-[#166534]' : 'text-[#575550]'
+                  }`}
+                >
+                  {item.result}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#F6F5F2] border border-[#E6E4DF] space-y-1">
+          <div className="flex items-center justify-between text-[12px] text-[#6B6862]">
+            <span>Audit digest</span>
+            <span className="font-medium text-[#575550]">SHA256-ED25519</span>
+          </div>
+          <div className="text-[12.5px] text-[#575550] break-all">
+            cc_proof_9f82d1c6e4a05b387921a94e823b1029c784e1f6a5b9c0d2e4f6
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-[#E6E4DF] flex items-center justify-between gap-3 shrink-0">
+        <span className="text-[13px] text-[#575550]">
+          Reviewer: <span className="font-medium text-[#141413]">Human Tech Lead</span>
+        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPRSummaryOpen(false)}
+            className="h-9 px-3.5 rounded-lg border border-[#E6E4DF] bg-white hover:bg-[#F6F5F2] text-[13px] font-medium text-[#575550] hover:text-[#141413] transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+
+          <button
+            type="button"
+            onClick={handleMerge}
+            disabled={isMerged}
+            className={`h-9 px-4 rounded-lg text-[13px] font-medium flex items-center gap-1.5 cc-press ${
+              isMerged
+                ? 'bg-[#ECFDF3] text-[#166534] border border-[#BBF7D0] cursor-default'
+                : 'bg-[#166534] hover:bg-[#14532D] text-white cursor-pointer'
+            }`}
+          >
+            {isMerged ? (
+              <Check className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <GitPullRequest className="w-4 h-4" aria-hidden="true" />
+            )}
+            <span>{isMerged ? 'Pull request merged' : 'Merge pull request'}</span>
+          </button>
+        </div>
+      </div>
+    </ModalDialog>
   );
 };

@@ -1,52 +1,62 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useCouncilStore } from '@/store/councilStore';
 import {
-  Users,
   Bot,
   Server,
   Terminal,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Trash2,
-  FileCode2
+  X,
+  Trash2
 } from 'lucide-react';
 
+const MODEL_LABELS: Record<string, string> = {
+  anthropic: 'Claude',
+  deepseek: 'DeepSeek',
+  openai: 'GPT-4o',
+  google: 'Gemini'
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  security: 'Security',
+  logic: 'Logic',
+  contract: 'Contract',
+  performance: 'Performance',
+  style: 'Style'
+};
+
 export const StudioRosterDock: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isRosterOpen = useCouncilStore((state) => state.isRosterOpen);
+  const setRosterOpen = useCouncilStore((state) => state.setRosterOpen);
 
   const critics = useCouncilStore((state) => state.critics);
   const selectedAgentId = useCouncilStore((state) => state.selectedAgentId);
   const selectedStation = useCouncilStore((state) => state.selectedStation);
-  const cameraFocus = useCouncilStore((state) => state.cameraFocus);
   const workflowState = useCouncilStore((state) => state.workflowState);
   const sandboxState = useCouncilStore((state) => state.sandboxState);
 
   const selectAgent = useCouncilStore((state) => state.selectAgent);
   const selectStation = useCouncilStore((state) => state.selectStation);
-  const setCameraFocus = useCouncilStore((state) => state.setCameraFocus);
   const setAddCriticOpen = useCouncilStore((state) => state.setAddCriticOpen);
   const removeCritic = useCouncilStore((state) => state.removeCritic);
   const setCodeViewMode = useCouncilStore((state) => state.setCodeViewMode);
 
-  const getWorkerStatusBadge = (status: string, role: string) => {
+  const getWorkerStatus = (status: string, role: string) => {
     switch (status) {
       case 'found_issue':
-        return { text: 'Bug Found!', cls: 'bg-red-100 text-red-800 border-red-300' };
+        return { text: 'Bug found', cls: 'bg-[#FEF2F2] text-[#991B1B]' };
       case 'submitting':
-        return { text: 'Proving', cls: 'bg-amber-100 text-amber-900 border-amber-300' };
+        return { text: 'Proving', cls: 'bg-[#FFFBEB] text-[#92400E]' };
       case 'reviewing':
-        return { text: 'Reviewing', cls: 'bg-amber-50 text-amber-800 border-amber-200' };
+        return { text: 'Reviewing', cls: 'bg-[#FFFBEB] text-[#92400E]' };
       case 'approved':
       case 'celebrating':
-        return { text: 'Approved', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+        return { text: 'Approved', cls: 'bg-[#ECFDF3] text-[#166534]' };
       case 'waiting_sandbox':
-        return { text: 'Wait Gate', cls: 'bg-stone-100 text-stone-500 border-stone-200' };
+        return { text: 'Waiting', cls: 'bg-[#F2F1EE] text-[#575550]' };
       case 'entering':
-        return { text: 'Walking...', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+        return { text: 'Joining', cls: 'bg-[#F2F1EE] text-[#575550]' };
       default:
         if (
           role === 'style' &&
@@ -54,330 +64,226 @@ export const StudioRosterDock: React.FC = () => {
             workflowState === 'MAIN_AGENT_ARBITRATION' ||
             workflowState === 'REVISION_IN_PROGRESS')
         ) {
-          return { text: 'Filtered', cls: 'bg-rose-50 text-rose-700 border-rose-200' };
+          return { text: 'Filtered', cls: 'bg-[#FEF2F2] text-[#991B1B]' };
         }
-        return { text: 'Seated', cls: 'bg-stone-100 text-stone-600 border-stone-200/80' };
+        return null;
     }
   };
 
-  if (isCollapsed) {
-    return (
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="px-3 py-2 rounded-xl bg-[#FAF8F5]/95 hover:bg-white border border-stone-200/90 backdrop-blur-xl shadow-lg text-xs font-medium text-stone-800 flex items-center gap-2 transition-all cursor-pointer group"
-          title="Expand Office Directory & Worker Navigation"
-        >
-          <Users className="w-3.5 h-3.5 text-[#C85A3E]" />
-          <span>Office Roster ({critics.length + 3})</span>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:translate-x-0.5 transition-transform" />
-        </button>
-      </div>
-    );
-  }
+  const sandboxStatusLabel =
+    sandboxState.status === 'passed'
+      ? 'Passed'
+      : sandboxState.status === 'running'
+      ? 'Running'
+      : null;
+
+  const arbiterStatusLabel =
+    workflowState === 'MAIN_AGENT_ARBITRATION' ? 'Arbitrating' : null;
+
+  const coderStatusLabel =
+    workflowState === 'REVISION_IN_PROGRESS' ? 'Patching' : null;
 
   return (
     <aside
-      className="absolute top-3 left-3 z-20 w-68 max-h-[calc(100vh-140px)] flex flex-col rounded-2xl bg-[#FAF8F5]/92 backdrop-blur-xl border border-stone-200/90 shadow-xl overflow-hidden text-stone-800 transition-all"
+      aria-label="Studio roster"
+      inert={!isRosterOpen ? true : undefined}
+      className={`fixed top-17 left-3 z-20 w-72 max-w-[calc(100vw-24px)] max-h-[calc(100dvh-176px)] flex flex-col rounded-xl bg-white border border-[#E6E4DF] text-[#141413] overflow-hidden transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-[opacity] ${
+        isRosterOpen
+          ? 'opacity-100 translate-x-0 pointer-events-auto'
+          : 'opacity-0 -translate-x-2 pointer-events-none motion-reduce:translate-x-0'
+      }`}
       style={{
-        boxShadow: '0 12px 32px -6px rgba(45, 35, 25, 0.12)'
+        boxShadow: '0 2px 10px rgb(20 20 19 / 0.06)'
       }}
     >
-      {/* Header Bar */}
-      <div className="px-3.5 py-2.5 border-b border-stone-200/80 bg-white/70 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#C85A3E]" />
-          <span className="text-xs font-semibold text-stone-900 tracking-tight">
-            Studio Navigator
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          {cameraFocus !== 'overview' && (
-            <button
-              onClick={() => {
-                selectStation(null);
-                setCameraFocus('overview');
-              }}
-              className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer flex items-center gap-1"
-              title="Reset 3D camera to full studio overview"
-            >
-              <Eye className="w-2.5 h-2.5" />
-              <span>Overview</span>
-            </button>
-          )}
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
-            title="Collapse Roster Dock"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-        </div>
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-[#E6E4DF] flex items-center justify-between">
+        <h2 className="text-[14px] font-semibold text-[#141413]">Studio roster</h2>
+        <button
+          type="button"
+          onClick={() => setRosterOpen(false)}
+          aria-label="Close roster"
+          className="h-7 w-7 rounded-md text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
       </div>
 
-      {/* Scrollable Directory Body */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-3 no-scrollbar">
-        {/* 1. Core Stations Section */}
-        <div className="space-y-1">
-          <div className="px-1 flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold">
-              Core Stations (3)
-            </span>
-            <span className="text-[9.5px] font-mono text-stone-400">Click to focus</span>
+      {/* Scrollable Directory */}
+      <div className="flex-1 overflow-y-auto cc-scroll p-3 space-y-4">
+        {/* Stations */}
+        <section aria-label="Core stations" className="space-y-1.5">
+          <div className="px-2 text-[12px] font-medium text-[#6B6862]">
+            Stations
           </div>
 
-          <div className="grid grid-cols-1 gap-1">
-            {/* Main Arbiter */}
+          <div className="space-y-1">
             <button
-              onClick={() => selectStation('arbiter')}
-              className={`w-full px-2.5 py-1.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+              type="button"
+              onClick={() => selectStation('arbiter', true)}
+              className={`w-full px-2.5 py-2 rounded-lg text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                 selectedStation === 'arbiter'
-                  ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                  : 'bg-white/75 hover:bg-white border-stone-200/80 text-stone-800'
+                  ? 'bg-[#F2F1EE] text-[#141413]'
+                  : 'hover:bg-[#F6F5F2] text-[#141413]'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                    selectedStation === 'arbiter'
-                      ? 'bg-indigo-500/30 text-amber-300'
-                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60'
-                  }`}
-                >
-                  <Bot className="w-3 h-3" />
-                </div>
-                <div className="truncate">
-                  <div className="text-[11px] font-semibold leading-tight truncate">Main Arbiter</div>
-                  <div
-                    className={`text-[9.5px] font-mono truncate ${
-                      selectedStation === 'arbiter' ? 'text-stone-300' : 'text-stone-400'
-                    }`}
-                  >
-                    Round Table &bull; Facing South
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Bot className="w-4 h-4 text-[#575550] shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className={`text-[13px] leading-tight truncate ${selectedStation === 'arbiter' ? 'font-semibold' : 'font-medium'}`}>
+                    Main Arbiter
+                  </div>
+                  <div className="text-[12px] text-[#6B6862] truncate">
+                    Reconciles verified proofs
                   </div>
                 </div>
               </div>
-              <span
-                className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border shrink-0 ${
-                  workflowState === 'MAIN_AGENT_ARBITRATION'
-                    ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
-                    : selectedStation === 'arbiter'
-                    ? 'bg-white/10 text-stone-200 border-white/15'
-                    : 'bg-stone-100 text-stone-600 border-stone-200/80'
-                }`}
-              >
-                {workflowState === 'MAIN_AGENT_ARBITRATION' ? 'Arbitrating' : 'Lead'}
-              </span>
+              {arbiterStatusLabel && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FFFBEB] text-[#92400E] shrink-0">
+                  {arbiterStatusLabel}
+                </span>
+              )}
             </button>
 
-            {/* Deterministic Sandbox */}
             <button
-              onClick={() => selectStation('sandbox')}
-              className={`w-full px-2.5 py-1.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+              type="button"
+              onClick={() => selectStation('sandbox', true)}
+              className={`w-full px-2.5 py-2 rounded-lg text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                 selectedStation === 'sandbox'
-                  ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                  : 'bg-white/75 hover:bg-white border-stone-200/80 text-stone-800'
+                  ? 'bg-[#F2F1EE] text-[#141413]'
+                  : 'hover:bg-[#F6F5F2] text-[#141413]'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                    selectedStation === 'sandbox'
-                      ? 'bg-emerald-500/30 text-emerald-300'
-                      : 'bg-emerald-50 text-[#0D5F3A] border border-emerald-200/60'
-                  }`}
-                >
-                  <Server className="w-3 h-3" />
-                </div>
-                <div className="truncate">
-                  <div className="text-[11px] font-semibold leading-tight truncate">Sandbox Kiln</div>
-                  <div
-                    className={`text-[9.5px] font-mono truncate ${
-                      selectedStation === 'sandbox' ? 'text-stone-300' : 'text-stone-400'
-                    }`}
-                  >
-                    Zero-Token Fast-Fail Gate
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Server className="w-4 h-4 text-[#575550] shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className={`text-[13px] leading-tight truncate ${selectedStation === 'sandbox' ? 'font-semibold' : 'font-medium'}`}>
+                    Sandbox Kiln
+                  </div>
+                  <div className="text-[12px] text-[#6B6862] truncate">
+                    Fast-fail build &amp; test gate
                   </div>
                 </div>
               </div>
-              <span
-                className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border shrink-0 ${
-                  sandboxState.status === 'passed'
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                    : sandboxState.status === 'running'
-                    ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
-                    : selectedStation === 'sandbox'
-                    ? 'bg-white/10 text-stone-200 border-white/15'
-                    : 'bg-stone-100 text-stone-600 border-stone-200/80'
-                }`}
-              >
-                {sandboxState.status === 'passed'
-                  ? '4/4 Green'
-                  : sandboxState.status === 'running'
-                  ? 'Running'
-                  : 'Standby'}
-              </span>
+              {sandboxStatusLabel && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${
+                    sandboxState.status === 'passed'
+                      ? 'bg-[#ECFDF3] text-[#166534]'
+                      : 'bg-[#FFFBEB] text-[#92400E]'
+                  }`}
+                >
+                  {sandboxStatusLabel}
+                </span>
+              )}
             </button>
 
-            {/* Coding Agent */}
             <button
+              type="button"
               onClick={() => {
-                selectStation('coder');
+                selectStation('coder', true);
                 setCodeViewMode('diff');
               }}
-              className={`w-full px-2.5 py-1.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+              className={`w-full px-2.5 py-2 rounded-lg text-left flex items-center justify-between gap-2 transition-colors cursor-pointer ${
                 selectedStation === 'coder'
-                  ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                  : 'bg-white/75 hover:bg-white border-stone-200/80 text-stone-800'
+                  ? 'bg-[#F2F1EE] text-[#141413]'
+                  : 'hover:bg-[#F6F5F2] text-[#141413]'
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                    selectedStation === 'coder'
-                      ? 'bg-blue-500/30 text-blue-300'
-                      : 'bg-blue-50 text-blue-700 border border-blue-200/60'
-                  }`}
-                >
-                  <Terminal className="w-3 h-3" />
-                </div>
-                <div className="truncate">
-                  <div className="text-[11px] font-semibold leading-tight truncate">Coding Agent</div>
-                  <div
-                    className={`text-[9.5px] font-mono truncate ${
-                      selectedStation === 'coder' ? 'text-stone-300' : 'text-stone-400'
-                    }`}
-                  >
-                    Drafting Desk &bull; Patcher
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Terminal className="w-4 h-4 text-[#575550] shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className={`text-[13px] leading-tight truncate ${selectedStation === 'coder' ? 'font-semibold' : 'font-medium'}`}>
+                    Coding Agent
+                  </div>
+                  <div className="text-[12px] text-[#6B6862] truncate">
+                    Applies verified patches
                   </div>
                 </div>
               </div>
-              <span
-                className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border shrink-0 ${
-                  workflowState === 'REVISION_IN_PROGRESS'
-                    ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
-                    : selectedStation === 'coder'
-                    ? 'bg-white/10 text-stone-200 border-white/15'
-                    : 'bg-stone-100 text-stone-600 border-stone-200/80'
-                }`}
-              >
-                {workflowState === 'REVISION_IN_PROGRESS' ? 'Patching' : 'Builder'}
-              </span>
+              {coderStatusLabel && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FFFBEB] text-[#92400E] shrink-0">
+                  {coderStatusLabel}
+                </span>
+              )}
             </button>
           </div>
-        </div>
+        </section>
 
-        {/* 2. Critic Council Workers Section */}
-        <div className="space-y-1.5">
-          <div className="px-1 flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold">
-              Critic Workers ({critics.length}/6 Desks)
-            </span>
-            {critics.length < 6 && (
-              <button
-                onClick={() => setAddCriticOpen(true)}
-                className="text-[10px] font-mono font-semibold text-[#C85A3E] hover:underline flex items-center gap-0.5 cursor-pointer"
-              >
-                <Plus className="w-2.5 h-2.5" />
-                <span>Add</span>
-              </button>
-            )}
+        {/* Reviewers */}
+        <section aria-label="Critic council reviewers" className="space-y-1.5">
+          <div className="px-2 flex items-center justify-between text-[12px] font-medium text-[#6B6862]">
+            <span>Reviewers</span>
+            <span className="tabular-nums">{critics.length} of 6</span>
           </div>
 
           <div className="space-y-1">
             {critics.map((critic) => {
               const isSelected = selectedAgentId === critic.id;
-              const badge = getWorkerStatusBadge(critic.status, critic.role);
+              const statusBadge = getWorkerStatus(critic.status, critic.role);
 
               return (
                 <div
                   key={critic.id}
-                  onClick={() => selectAgent(critic.id)}
-                  className={`px-2.5 py-2 rounded-xl border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
-                      : 'bg-white/75 hover:bg-white border-stone-200/80 text-stone-800'
+                  className={`rounded-lg flex items-center justify-between gap-1 transition-colors ${
+                    isSelected ? 'bg-[#F2F1EE]' : 'hover:bg-[#F6F5F2]'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => selectAgent(critic.id)}
+                    className="flex-1 min-w-0 px-2.5 py-2 text-left flex items-center justify-between gap-2 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-black/5"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: critic.accentColor }}
+                        aria-hidden="true"
                       />
-                      <div className="truncate">
-                        <div className="text-[11px] font-semibold leading-tight truncate">
+                      <div className="min-w-0">
+                        <div className={`text-[13px] text-[#141413] leading-tight truncate ${isSelected ? 'font-semibold' : 'font-medium'}`}>
                           {critic.name}
                         </div>
-                        <div
-                          className={`text-[9.5px] font-mono truncate ${
-                            isSelected ? 'text-stone-300' : 'text-stone-400'
-                          }`}
-                        >
-                          Desk #{critic.deskIndex + 1} &bull; {critic.role} &bull; {critic.model}
+                        <div className="text-[12px] text-[#6B6862] truncate">
+                          {ROLE_LABELS[critic.role] || critic.role} &middot; {MODEL_LABELS[critic.model] || critic.model}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span
-                        className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded border ${
-                          isSelected
-                            ? 'bg-white/15 text-amber-200 border-white/20'
-                            : badge.cls
-                        }`}
-                      >
-                        {badge.text}
+                    {statusBadge && (
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${statusBadge.cls}`}>
+                        {statusBadge.text}
                       </span>
-                      {critic.isCustom && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeCritic(critic.id);
-                          }}
-                          className={`p-0.5 rounded transition-colors cursor-pointer ${
-                            isSelected
-                              ? 'text-stone-400 hover:text-rose-300'
-                              : 'text-stone-400 hover:text-rose-600'
-                          }`}
-                          title="Remove custom reviewer"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    )}
+                  </button>
+
+                  {critic.isCustom && (
+                    <button
+                      type="button"
+                      onClick={() => removeCritic(critic.id)}
+                      aria-label={`Remove ${critic.name}`}
+                      title={`Remove ${critic.name}`}
+                      className="mr-1.5 h-7 w-7 rounded-md text-[#6B6862] hover:text-[#991B1B] hover:bg-[#FEF2F2] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
               );
             })}
-
-            {/* Vacant Desk Invite Button */}
-            {critics.length < 6 && (
-              <button
-                onClick={() => setAddCriticOpen(true)}
-                className="w-full px-2.5 py-1.5 rounded-xl border border-dashed border-stone-300 hover:border-[#C85A3E] bg-stone-100/40 hover:bg-[#C85A3E]/5 text-stone-500 hover:text-[#C85A3E] text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Assign Reviewer to Desk #{critics.length + 1}</span>
-              </button>
-            )}
           </div>
-        </div>
-      </div>
 
-      {/* Footer Hint */}
-      <div className="px-3 py-2 border-t border-stone-200/80 bg-stone-100/60 flex items-center justify-between text-[10px] font-mono text-stone-500">
-        <span>Drag to Orbit &bull; Scroll to Zoom</span>
-        <button
-          onClick={() => {
-            selectStation('coder');
-            setCodeViewMode('diff');
-          }}
-          className="text-[#C85A3E] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-        >
-          <FileCode2 className="w-3 h-3" />
-          <span>View Diff</span>
-        </button>
+          {critics.length < 6 && (
+            <button
+              type="button"
+              onClick={() => setAddCriticOpen(true)}
+              className="w-full h-9 mt-1.5 px-3 rounded-lg border border-dashed border-[#D4D1CA] hover:border-[#141413] hover:bg-[#F6F5F2] text-[#575550] hover:text-[#141413] text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Add reviewer</span>
+            </button>
+          )}
+        </section>
       </div>
     </aside>
   );

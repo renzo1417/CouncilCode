@@ -3,17 +3,11 @@
 import React from 'react';
 import { useCouncilStore } from '@/store/councilStore';
 import {
-  ShieldCheck,
-  RotateCcw,
   Volume2,
   VolumeX,
   GitPullRequest,
   Network,
-  Eye,
-  Server,
-  Bot,
-  Terminal,
-  UserPlus,
+  Users,
   PanelRight
 } from 'lucide-react';
 
@@ -22,187 +16,173 @@ export const Header: React.FC = () => {
   const setCameraFocus = useCouncilStore((state) => state.setCameraFocus);
   const selectStation = useCouncilStore((state) => state.selectStation);
   const setCodeViewMode = useCouncilStore((state) => state.setCodeViewMode);
+  const setInspectorTab = useCouncilStore((state) => state.setInspectorTab);
   const soundEnabled = useCouncilStore((state) => state.soundEnabled);
   const toggleSound = useCouncilStore((state) => state.toggleSound);
-  const resetWorkflow = useCouncilStore((state) => state.resetWorkflow);
   const workflowState = useCouncilStore((state) => state.workflowState);
   const setMultiDevModalOpen = useCouncilStore((state) => state.setMultiDevModalOpen);
   const setPRSummaryOpen = useCouncilStore((state) => state.setPRSummaryOpen);
-  const setAddCriticOpen = useCouncilStore((state) => state.setAddCriticOpen);
   const isInspectorOpen = useCouncilStore((state) => state.isInspectorOpen);
   const setInspectorOpen = useCouncilStore((state) => state.setInspectorOpen);
+  const isRosterOpen = useCouncilStore((state) => state.isRosterOpen);
+  const setRosterOpen = useCouncilStore((state) => state.setRosterOpen);
+  const critics = useCouncilStore((state) => state.critics);
   const findings = useCouncilStore((state) => state.findings);
 
+  const hasVerifiedFinding = findings.some((f) => f.proofStatus === 'verified_reproduced');
+  const isPRReady = workflowState === 'PR_READY' || workflowState === 'VERIFIED';
+
   return (
-    <header className="h-13 border-b border-stone-200/80 bg-[#FAF8F5]/95 backdrop-blur-xl px-4 flex items-center justify-between z-30 shrink-0 select-none">
-      {/* Brand & Task Brief */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#C85A3E]/10 border border-[#C85A3E]/20 flex items-center justify-center text-[#C85A3E]">
-            <ShieldCheck className="w-4 h-4" />
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="font-semibold text-sm tracking-tight text-stone-900 font-sans">
-              Council<span className="text-[#C85A3E]">Code</span>
-            </span>
-            <span className="text-[10px] font-mono tracking-wider uppercase text-stone-500 bg-stone-100/90 px-1.5 py-0.5 rounded border border-stone-200/60 font-medium">
-              proof-gated
-            </span>
-          </div>
-        </div>
+    <header className="h-14 border-b border-[#E6E4DF] bg-white px-4 flex items-center justify-between gap-3 z-30 shrink-0 select-none">
+      {/* Left: Brand Mark, Screen Title & Quiet File Context */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className="shrink-0 text-[#141413]"
+        >
+          <circle cx="9.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
+          <circle cx="14.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
+        </svg>
 
-        {/* Active Scenario Trigger */}
+        <h1 className="text-[15px] font-semibold tracking-[-0.02em] text-[#141413] whitespace-nowrap">
+          CouncilCode
+        </h1>
+
+        <span className="hidden xl:inline text-[#D4D1CA]" aria-hidden="true">
+          /
+        </span>
+
         <button
+          type="button"
           onClick={() => {
-            selectStation('coder');
+            selectStation('coder', true);
+            setInspectorTab('code');
             setCodeViewMode('diff');
           }}
-          className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-stone-100/70 hover:bg-stone-200/60 border border-stone-200/70 text-xs text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
-          title="Inspect scenario code and vulnerability diff"
+          className="hidden xl:inline-flex items-center px-1.5 py-1 rounded-md text-[13px] text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] transition-colors cursor-pointer whitespace-nowrap"
+          title="Inspect invoices.ts diff"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#C85A3E]" />
-          <span className="font-mono text-[11px] font-medium text-stone-700">CWE-639 IDOR</span>
-          <span className="text-stone-300 font-mono">/</span>
-          <span className="font-mono text-[11px] text-stone-500 truncate max-w-[160px]">invoices.ts</span>
+          invoices.ts
         </button>
       </div>
 
-      {/* Center: Precision Segmented Camera & Station Switch */}
-      <div className="hidden md:flex items-center bg-stone-200/60 p-0.5 rounded-lg border border-stone-200 text-xs">
+      {/* Center: Calm Segmented Camera Switcher */}
+      <nav
+        aria-label="Studio camera views"
+        className="hidden lg:flex items-center bg-[#F2F1EE] p-0.5 rounded-lg"
+      >
+        {[
+          { id: 'overview', label: 'Overview', onClick: () => { selectStation(null); setCameraFocus('overview'); } },
+          { id: 'arbiter', label: 'Arbiter', onClick: () => selectStation('arbiter', isInspectorOpen) },
+          { id: 'sandbox', label: 'Sandbox', onClick: () => selectStation('sandbox', isInspectorOpen) },
+          {
+            id: 'coder',
+            label: 'Coder',
+            onClick: () => {
+              selectStation('coder', isInspectorOpen);
+              setCodeViewMode('diff');
+            }
+          }
+        ].map((view) => {
+          const active = cameraFocus === view.id;
+          return (
+            <button
+              key={view.id}
+              type="button"
+              onClick={view.onClick}
+              className={`px-3 py-1 rounded-[6px] text-[13px] font-medium transition-colors cursor-pointer ${
+                active
+                  ? 'bg-white text-[#141413] border border-[#E6E4DF]'
+                  : 'text-[#575550] hover:text-[#141413] border border-transparent'
+              }`}
+            >
+              {view.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Right: Disciplined Workspace Controls */}
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
-          onClick={() => {
-            selectStation(null);
-            setCameraFocus('overview');
-          }}
-          className={`px-3 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer ${
-            cameraFocus === 'overview'
-              ? 'bg-white text-stone-900 shadow-xs'
-              : 'text-stone-600 hover:text-stone-900'
+          type="button"
+          onClick={() => setRosterOpen(!isRosterOpen)}
+          aria-expanded={isRosterOpen}
+          className={`h-8 px-2.5 rounded-lg text-[13px] font-medium flex items-center gap-1.5 border cc-press cursor-pointer ${
+            isRosterOpen
+              ? 'bg-[#F2F1EE] border-[#D4D1CA] text-[#141413]'
+              : 'bg-white border-[#E6E4DF] text-[#575550] hover:text-[#141413] hover:bg-[#F6F5F2]'
           }`}
-          title="Full Studio Diorama View"
+          title="Toggle studio roster"
         >
-          <Eye className="w-3.5 h-3.5 text-stone-500" />
-          <span>Studio</span>
+          <Users className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="hidden sm:inline">Council</span>
+          <span className="tabular-nums text-[12px] text-[#6B6862]">{critics.length}</span>
         </button>
 
         <button
-          onClick={() => selectStation('arbiter')}
-          className={`px-3 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer ${
-            cameraFocus === 'arbiter'
-              ? 'bg-white text-stone-900 shadow-xs'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-          title="Focus Arbiter Round Table & Inspect Arbitration"
-        >
-          <Bot className="w-3.5 h-3.5 text-stone-500" />
-          <span>Arbiter</span>
-        </button>
-
-        <button
-          onClick={() => selectStation('sandbox')}
-          className={`px-3 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer ${
-            cameraFocus === 'sandbox'
-              ? 'bg-white text-stone-900 shadow-xs'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-          title="Focus Verification Kiln & Inspect Sandbox Logs"
-        >
-          <Server className="w-3.5 h-3.5 text-stone-500" />
-          <span>Sandbox</span>
-        </button>
-
-        <button
-          onClick={() => {
-            selectStation('coder');
-            setCodeViewMode('diff');
-          }}
-          className={`px-3 py-1 rounded-md flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer ${
-            cameraFocus === 'coder'
-              ? 'bg-white text-stone-900 shadow-xs'
-              : 'text-stone-600 hover:text-stone-900'
-          }`}
-          title="Focus Coding Agent Desk & Inspect Code Diff"
-        >
-          <Terminal className="w-3.5 h-3.5 text-stone-500" />
-          <span>Coder</span>
-        </button>
-      </div>
-
-      {/* Right: Actions Hierarchy */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Primary Action: Add Reviewer */}
-        <button
-          onClick={() => setAddCriticOpen(true)}
-          className="px-3 py-1.5 rounded-lg bg-[#C85A3E] hover:bg-[#B34B31] text-white text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-[0.98]"
-          title="Add a new specialized Critic Agent to the council"
-        >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Add Reviewer</span>
-        </button>
-
-        {/* Slide-Over Drawer Toggle */}
-        <button
+          type="button"
           onClick={() => setInspectorOpen(!isInspectorOpen)}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border ${
+          aria-expanded={isInspectorOpen}
+          className={`h-8 px-2.5 rounded-lg text-[13px] font-medium flex items-center gap-1.5 border cc-press cursor-pointer ${
             isInspectorOpen
-              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-              : 'bg-white/80 border-stone-200/90 text-stone-700 hover:bg-stone-100/80'
+              ? 'bg-[#F2F1EE] border-[#D4D1CA] text-[#141413]'
+              : 'bg-white border-[#E6E4DF] text-[#575550] hover:text-[#141413] hover:bg-[#F6F5F2]'
           }`}
-          title="Toggle Inspection Drawer"
+          title="Toggle verification inspector"
         >
-          <PanelRight className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Inspector</span>
-          <span
-            className={`text-[10px] font-mono px-1 rounded ${
-              isInspectorOpen ? 'bg-white/20 text-white' : 'bg-stone-200/80 text-stone-600'
-            }`}
-          >
-            {findings.length}
-          </span>
+          <PanelRight className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="hidden sm:inline">Inspect</span>
+          {hasVerifiedFinding && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-[#15803D]"
+              aria-label="Verified proof available"
+            />
+          )}
         </button>
 
-        {/* Pods Architecture */}
         <button
-          onClick={() => setMultiDevModalOpen(true)}
-          className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/80 border border-stone-200/90 hover:bg-stone-100/80 text-stone-600 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-          title="View Multi-Dev Pods Architecture"
-        >
-          <Network className="w-3.5 h-3.5 text-stone-500" />
-          <span className="hidden md:inline">Pods</span>
-        </button>
-
-        {/* PR Preview Button */}
-        <button
+          type="button"
           onClick={() => setPRSummaryOpen(true)}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer border ${
-            workflowState === 'PR_READY' || workflowState === 'VERIFIED'
-              ? 'bg-[#0D5F3A] hover:bg-[#0A4B2E] text-white border-[#0D5F3A] shadow-xs'
-              : 'bg-white/80 border-stone-200/90 text-stone-600 hover:text-stone-900 hover:bg-stone-100/80'
+          className={`h-8 px-2.5 rounded-lg text-[13px] font-medium flex items-center gap-1.5 border cc-press cursor-pointer ${
+            isPRReady
+              ? 'bg-[#166534] hover:bg-[#14532D] text-white border-[#166534]'
+              : 'bg-white border-[#E6E4DF] text-[#575550] hover:text-[#141413] hover:bg-[#F6F5F2]'
           }`}
-          title="Open Verified Pull Request Modal"
+          title="Open pull request summary"
         >
-          <GitPullRequest className={`w-3.5 h-3.5 ${workflowState === 'PR_READY' || workflowState === 'VERIFIED' ? 'text-white' : 'text-stone-500'}`} />
-          <span>PR #{workflowState === 'PR_READY' || workflowState === 'VERIFIED' ? '42 (Verified)' : 'Preview'}</span>
+          <GitPullRequest className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="tabular-nums">PR #42</span>
         </button>
 
-        <div className="h-4 w-px bg-stone-200/80 mx-0.5" />
+        <div className="hidden sm:block h-4 w-px bg-[#E6E4DF] mx-0.5" aria-hidden="true" />
 
-        {/* Sound Toggle */}
         <button
+          type="button"
+          onClick={() => setMultiDevModalOpen(true)}
+          aria-label="View multi-developer pods architecture"
+          title="Team pods architecture"
+          className="hidden sm:flex h-8 w-8 rounded-lg text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] items-center justify-center cc-press cursor-pointer"
+        >
+          <Network className="w-4 h-4" aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
           onClick={toggleSound}
-          className="p-1.5 rounded-lg hover:bg-stone-200/60 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
-          title={soundEnabled ? 'Disable Sound Effects' : 'Enable Sound Effects'}
+          aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+          title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+          className="h-8 w-8 rounded-lg text-[#575550] hover:text-[#141413] hover:bg-[#F2F1EE] flex items-center justify-center cc-press cursor-pointer"
         >
-          {soundEnabled ? <Volume2 className="w-4 h-4 text-stone-700" /> : <VolumeX className="w-4 h-4 text-stone-400" />}
-        </button>
-
-        {/* Reset Workflow */}
-        <button
-          onClick={resetWorkflow}
-          className="p-1.5 rounded-lg hover:bg-stone-200/60 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
-          title="Reset Demo Workflow (R)"
-        >
-          <RotateCcw className="w-4 h-4" />
+          {soundEnabled ? (
+            <Volume2 className="w-4 h-4" aria-hidden="true" />
+          ) : (
+            <VolumeX className="w-4 h-4 text-[#6B6862]" aria-hidden="true" />
+          )}
         </button>
       </div>
     </header>
