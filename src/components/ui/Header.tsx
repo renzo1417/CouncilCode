@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useCouncilStore } from '@/store/councilStore';
 import {
   Volume2,
@@ -36,21 +37,27 @@ export const Header: React.FC = () => {
     <header className="h-14 border-b border-[#E6E4DF] bg-white px-4 flex items-center justify-between gap-3 z-30 shrink-0 select-none">
       {/* Left: Brand Mark, Screen Title & Quiet File Context */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-          className="shrink-0 text-[#141413]"
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141413] hover:opacity-80 transition-opacity"
+          title="Back to CouncilCode overview"
         >
-          <circle cx="9.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
-          <circle cx="14.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
-        </svg>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0 text-[#141413]"
+          >
+            <circle cx="9.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
+            <circle cx="14.5" cy="12" r="5.5" stroke="currentColor" strokeWidth="1.75" />
+          </svg>
 
-        <h1 className="text-[15px] font-semibold tracking-[-0.02em] text-[#141413] whitespace-nowrap">
-          CouncilCode
-        </h1>
+          <h1 className="text-[15px] font-semibold tracking-[-0.02em] text-[#141413] whitespace-nowrap">
+            CouncilCode
+          </h1>
+        </Link>
 
         <span className="hidden xl:inline text-[#D4D1CA]" aria-hidden="true">
           /

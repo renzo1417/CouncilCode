@@ -57,11 +57,12 @@
   - **Orchestration hosting:** Stateful workflow engine (e.g., Temporal)
   - **People & Distribution:** Engineering, support, GitHub/GitLab app & VS Code marketplace (low CAC via bottom-up, badges, OSS)
   - **LLM Token Costs:** **`$0`** (customer pays directly via Bring-Your-Own-Key / BYOK)
-- **Revenue Streams (BYOK SaaS — no AI token margin risk):**
-  - **Free:** `$0` (15 solo / 25 squad PRs)
+- **Revenue Streams (BYOK SaaS + Free Local / Open-Source Core — no AI token margin risk):**
+  - **Local CLI & Open-Source Core (`$0`):** Install via `npm i -g @councilcode/cli` or VS Code extension with local Docker/WASM sandbox and git pre-commit hooks — works free locally (including offline with local models) using your own API keys or local endpoints.
+  - **Cloud Free:** `$0` (15 solo / 25 squad PRs on managed microVMs)
   - **Solo Builder:** `$5/mo` (50 PRs) — `~82%` gross margin
   - **Solo Pro:** `$10/mo` (250 PRs) — `~78%` gross margin (`~55%` at full use)
-  - **Team:** `$15/seat/mo` (unlimited, fair-use) — `~95%` gross margin
+  - **Team:** `$15/seat/mo` (unlimited, fair-use + Two-Tier Pods) — `~95%` gross margin
   - **OSS Programs:** OSS Starter `$0` (50 PRs) | Verified OSS Grant `$0` (250 PRs)
   - *LTV and total revenue are to be validated with conversion and retention data.*
 
@@ -171,8 +172,9 @@ This workspace already contains a functional **Next.js + React Three Fiber (Thre
 
 ---
 
-## 8. Workbook Cleanup & Pitch Readiness Notes
+## 8. Workbook Alignment & Product Notes
 
-1. **Incomplete Workbook Tabs:** `Lean Canvas Part 2`, `Prototype`, and `Final Elevator Pitch` (plus the `SKIP THIS...` tabs) are currently marked `INCOMPLETE` in the Google Sheet.
-2. **Legacy Project References:** Earlier tabs (`Technology Push`, `Revised Elevator Pitch`, `Market Segmentation`) still contain *StrayPaws Relief* and *Padulong* text from prior iterations — make sure only **CouncilCode** data is referenced in WildRoar submissions.
-3. **Model Naming Consistency:** The `From User Priorities to Life Cy` tab mentions `Claude 3.5 Sonnet`, `GPT-4o`, and `Gemini 1.5 Pro`, whereas the code prototype uses `Claude Sentinel`, `DeepSeek Logic`, and `CodeCraft Style` (OpenAI). In the pitch deck and video, refer to **frontier models across Anthropic Claude, OpenAI GPT, Google Gemini, and DeepSeek** so the pitch never sounds dated.
+1. **Completed Workbook Tabs:** `Lean Canvas Part 1`, `User Story Map`, `From User Priorities to Life Cycle`, `Competitive Positioning`, `Beachhead TAM SAM SOM`, `Prototype`, `Lean Canvas Part 2`, and `Final Elevator Pitch` are all populated in the Google Sheet.
+2. **Legacy Project References:** Earlier tabs (`Technology Push`, `Revised Elevator Pitch`, `Market Segmentation`) still contain *StrayPaws Relief* and *Padulong* text from prior iterations — only **CouncilCode** tabs should be referenced.
+3. **Vendor-Neutral BYOK (Any Model, Any Key):** CouncilCode does **not** require any specific LLM provider. Users supply whichever API keys or local model endpoints they prefer (cloud APIs, OpenAI-compatible gateways, or local/offline models) stored encrypted in their local OS keychain with `$0` token markup. Specific model names (`Claude`, `DeepSeek`, `OpenAI`, `Gemini`) appear in the prototype only as example configurations.
+4. **Free Local CLI / Open-Source Core vs. Hosted Cloud Plans:** Per the Customer Lifecycle (`From User Priorities to Life Cycle`) and Lean Canvas tabs, developers can run the open-source core locally for free via CLI (`npm i -g @councilcode/cli`), VS Code extension, and local Docker/WASM sandboxes (including offline with local models), while paid subscriptions (`$5 / $10 / $15 per seat`) fund managed ephemeral cloud microVMs (`~$0.015–$0.020`/run), GitHub App orchestration, and Two-Tier Team Pods.

@@ -5,6 +5,7 @@
   --foreground: #141413;
   --surface: #FFFFFF;
   --surface-subtle: #F0F0EE;
+  --surface-tone: #EAE9E5;
   --surface-hover: #E7E7E4;
   --border: #E5E5E3;
   --border-strong: #D4D4D0;
@@ -13,6 +14,16 @@
   --text-tertiary: #6B6862;
   --primary: #141413;
   --primary-hover: #2A2A28;
+
+  /* Dark Chapter Tokens */
+  --ground-dark: #141413;
+  --surface-dark: #1E1E1C;
+  --ink-dark: #F5F5F4;
+  --muted-dark: #B5B3AD;
+
+  /* Page Layout Grid Rhythm */
+  --margin: clamp(1rem, 2.2vw, 2rem);
+  --gutter: clamp(0.75rem, 1.4vw, 1.5rem);
 
   /* Semantic Status Tokens */
   --status-pass-bg: #ECFDF3;
@@ -27,7 +38,9 @@
 
   /* Custom Motion Curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-exit: cubic-bezier(0.55, 0.055, 0.675, 0.19);
 
   /* Scrollbar Tokens (3:1+ contrast thumb) */
   --scrollbar-thumb: #8A867E;
@@ -41,13 +54,22 @@
   --font-mono: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+html {
+  container-type: scroll-state;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--text-primary);
   font-family: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-optical-sizing: auto;
-  overflow: hidden;
-  user-select: none;
 }
 
 pre,
@@ -57,8 +79,40 @@ samp {
   font-family: inherit;
 }
 
+:target {
+  scroll-margin-top: 5rem;
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+.page-wrap {
+  padding-inline: var(--margin);
+}
+
+/* Sticky Top Navigation with Scroll-State Auto-Hide */
+.cc-site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  transition: transform 240ms var(--ease-out);
+}
+
+@container scroll-state((scrolled: bottom) and (scrollable: top)) {
+  .cc-site-nav:not(:focus-within) {
+    transform: translateY(-100%);
+  }
+}
+
+.cc-site-nav.is-hidden:not(:focus-within) {
+  transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-site-nav {
+    transition: none;
+  }
 }
 
 /* Accessible Scrollbars */
@@ -97,7 +151,18 @@ samp {
   transform: scale(0.97);
 }
 
+.cc-link {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1.5px;
+  transition: text-decoration-color 180ms ease, color 180ms ease;
+}
+
 @media (hover: hover) and (pointer: fine) {
+  .cc-link:hover {
+    text-decoration-color: currentColor;
+  }
   .cc-hover-lift:hover {
     transform: translateY(-1px);
   }
@@ -107,6 +172,62 @@ samp {
   .cc-press:active,
   .cc-hover-lift:hover {
     transform: none;
+  }
+}
+
+/* Native Details Accordion (Progressive Intrinsic Size Animation) */
+.cc-accordion details {
+  border-radius: 0;
+}
+
+.cc-accordion summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.cc-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-accordion summary::before {
+  content: "";
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat center / contain;
+  rotate: -90deg;
+}
+
+.cc-accordion details[open] > summary::before {
+  rotate: 0deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cc-accordion summary::before {
+    transition: rotate 200ms var(--ease-out);
+  }
+}
+
+.cc-accordion details::details-content {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  contain: layout;
+}
+
+.cc-accordion details:not([open])::details-content {
+  block-size: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cc-accordion details::details-content {
+    transition-property: block-size, content-visibility, display;
+    transition-duration: 280ms;
+    transition-timing-function: var(--ease-in-out);
+    transition-behavior: allow-discrete;
   }
 }
 
@@ -181,6 +302,19 @@ dialog.cc-dialog[open]:where(:not([data-closing]))::backdrop {
   dialog.cc-dialog::backdrop {
     transition-duration: 100ms;
   }
+}
+
+/* Scoped styles inside cropped interactive product UI fragments */
+[data-ui] .ui-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+[data-ui] .ui-well {
+  background: #F6F5F2;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 /* Utility to hide scrollbars while allowing scroll */
