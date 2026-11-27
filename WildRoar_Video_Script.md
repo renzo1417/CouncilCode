@@ -25,17 +25,17 @@
 | :-: | :--- | :--- | :--- | :--- | :--- |
 | **1** | **Johanne Froilan Cando** *(Leader)* | **Johanne** | **The Judge / Main Arbiter** *(Scenes 2, 3 V.O., 5, 6)* | **Director & Timer Lead** *(guards `≤30s` demo & `≤10s` team timer)* | **Q&A Lead**, FAQ #3 (Sustainability), FAQ #6 (Investment / Hidden Slide A1) |
 | **2** | **John Prince Alonte** | **John Prince** | **Alex — 2:00 AM Dev** *(Scenes 1, 3B, 6)* | **Acting & Continuity Lead** *(matches Scene 1 & Scene 6 desk/lighting)* | Customer Pains & Developer Workflow (User Story Map) |
-| **3** | **Dexter James Benitez** | **Dexter** | **Teammate B — Frontend Dev** *(Scenes 1, 3B, 6)* | **Camera Operator & Framing** *(clean cuts, jury pans, whiteboard shots)* | Multi-Dev Two-Tier Pods & Bonus Q (Multi-Model Latency) |
+| **3** | **Dexter James Benitez** | **Dexter (Benitez)** | **Teammate B — Frontend Dev** *(Scenes 1, 3B, 6)* | **Camera Operator & Framing** *(clean cuts, jury pans, whiteboard shots)* | Multi-Dev Two-Tier Pods & Bonus Q (Multi-Model Latency) |
 | **4** | **Charlone Gianne Cruz** | **Gianne** | **Model A: Security Critic + Novelty Presenter** *(Scenes 2, 4A, 6)* | **Prototype & Screen-Capture Lead** *(records crisp 24s `/` → `/studio` demo)* | Architecture, Prototype, FAQ #5 (Adoption), FAQ #9 (Data Privacy / Hidden Slide A3) |
 | **5** | **Lei Sheldon Densing** | **Lei** | **Sandbox Bailiff** *(Scenes 2, 6)* | **Audio & Lighting Lead** *(dim 2 AM lighting vs. bright courtroom; clean voice pickup)* | Deterministic Sandbox Gate & Zero-Token Fast-Fail |
 | **6** | **Renzo Pogoy** | **Renzo** | **Noisy Bot + Model C: Unproved Style Critic** *(Scenes 1, 2, 6)* | **Props & Set Lead** *(sticky notes, A4 role cards, Red/Green cards, contract sheet)* | Proof Gate Filtering & Bonus Q (*"What if critics disagree?"*) |
 | **7** | **Casidey Kirzteen Quibuyen** | **Casidey** | **Market & Business Model Presenter** *(Scenes 5, 6)* | **Whiteboard Graphics & Pitch Deck Sync** *(draws TAM/SAM/SOM & pricing ladder)* | FAQ #1 (Economics), FAQ #2 (Monetization), FAQ #7–8 (Breakeven & ROI / Hidden Slide A2) |
-| **8** | **James Samson** | **James** | **Model B: Logic Critic + Matrix Presenter** *(Scenes 2, 4B, 6)* | **Whiteboard 2×2 Matrix & Fact-Check Lead** *(checks all numbers vs. Google Sheet)* | FAQ #4 (Competitive Positioning vs. Cursor, CodeRabbit, Qodo, Devin) |
+| **8** | **James Samson** | **James (Samson)** | **Model B: Logic Critic + Matrix Presenter** *(Scenes 2, 4B, 6)* | **Whiteboard 2×2 Matrix & Fact-Check Lead** *(checks all numbers vs. Google Sheet)* | FAQ #4 (Competitive Positioning vs. Cursor, CodeRabbit, Qodo, Devin) |
 | **9** | **Ycany Ashra Sanchez** | **Ycany** | **"Same AI" Cameo + Team Beat Presenter** *(Scenes 1, 6)* | **Video Editor & Motion Graphics** *(cuts, `02:00 AM` clock, `CWE-639` flash, subtitles, SFX)* | Team Capability, GTM Channels & Student/Hackathon Adoption |
 
 ---
 
-## 3. Classroom Props Checklist *(Owner: Renzo, Casidey, James, Gianne)*
+## 3. Classroom Props Checklist *(Owner: Renzo, Casidey, James (Samson), Gianne)*
 
 - Teacher's desk + **whiteboard eraser** (Judge's gavel)
 - **Sticky notes** (*"SAME AI"*, *"Rename `invoice`!"*, *"Use FP pipes!"*, *"Just vibes!"*)
@@ -44,7 +44,7 @@
   - `MODEL A: SECURITY`
   - `MODEL B: LOGIC`
   - `MODEL C: STYLE`
-- Printed evidence pages: `FAILING TEST: 403 IDOR EXPLOIT` (Gianne) and `FAILING TEST: NULL-AUTH CRASH` (James)
+- Printed evidence pages: `FAILING TEST: 403 IDOR EXPLOIT` (Gianne) and `FAILING TEST: NULL-AUTH CRASH` (James (Samson))
 - **Red Card** (`REJECTED — NO PROOF`) & **Green Sheet** (`PR #42 — VERIFIED GREEN`)
 - Sheet labeled **`API CONTRACT (LOCKED)`**
 - **Classroom Whiteboard** pre-drawn cleanly with:
@@ -69,7 +69,7 @@
 **Ycany:** *(cheerful thumbs-up)*  
 "Looks great to me! Ship it!"
 
-**[SFX / FLASH]:** *Record scratch.* Red alert graphic flashes across screen: **`CWE-639 DATA LEAK: ANY USER CAN READ ANY CUSTOMER INVOICE.`**
+**[SFX / FLASH / VIA EDIT]:** *Record scratch.* Red alert graphic flashes across screen: **`CWE-639 DATA LEAK: ANY USER CAN READ ANY CUSTOMER INVOICE.`**
 
 **[ACTION]:** **Renzo** slides into frame and rapidly slaps 10+ bright sticky notes all over John Prince's laptop and desk.
 
@@ -79,10 +79,10 @@
 **John Prince:** *(peeling sticky notes off his screen)*  
 "Forty bot comments wasting forty-five minutes of my life—and none of them caught the security leak!"
 
-**[ACTION]:** **Dexter** rushes in from the back row holding a laptop.
+**[ACTION]:** **Dexter (Benitez)** rushes in from the back row holding a laptop.
 
-**Dexter:**  
-"Alex! Your AI changed the backend API schema! My frontend AI assumed the old types—our merge just blew up!"
+**Dexter (Benitez):**  
+"Prince! Your AI changed the backend API schema! Our merge just blew up!"
 
 **John Prince:** *(looks straight to camera)*  
 "Solo dev, hackathon squad, open-source maintainer, or startup team—why does verifying AI code hurt worse than writing it?"
@@ -96,7 +96,7 @@
 **[TITLE CARD]:** **`COUNCILCODE`** — *A Jury of Rival AIs for Your AI-Written Code.*
 
 **Johanne:**  
-"Order in the repo! Meet **CouncilCode**—a jury of rival AIs for your AI-written code. Instead of threads of AI noise, plug in **any models you want** with your own keys, put them on trial *before* GitHub, and ship **one verified, green-tested Pull Request**."
+"Order in the repo! Meet **CouncilCode**—a jury of rival AIs for your AI-written code. plug in **any models you want** with your own keys, put them on trial *before* GitHub, and ship **one verified, green-tested Pull Request**."
 
 **[VISUAL]:** Quick pan to **Lei** holding a stopwatch and **`SANDBOX GATE (0 TOKENS)`** sign.
 
@@ -119,12 +119,12 @@
 **Johanne:**  
 "Overruled! Blocked by the Proof Gate. Next witnesses!"
 
-**[ACTION]:** **Gianne** and **James** stand back-to-back and hold up their printed failing test pages.
+**[ACTION]:** **Gianne** and **James (Samson)** stand back-to-back and hold up their printed failing test pages.
 
 **Gianne:**  
 "Objection! Cross-tenant invoice leak—here's my failing `403` exploit test."
 
-**James:**  
+**James (Samson):**  
 "Seconded! Missing null-auth guard crashes the route—here's my failing assertion."
 
 **Johanne:** *(slams gavel)*  
@@ -142,7 +142,7 @@
 2. `0:04–0:18`: Cut to `/studio` 3D CouncilCode Studio Diorama running `GET /api/v1/invoices/:id` (`CWE-639`): Sandbox clears 4/4 baseline gates at `$0` tokens → unproved style nitpick rejected by Proof Gate → Security & Logic models prove the `403` IDOR leak & null-auth crash with executable tests.  
 3. `0:18–0:24`: `PRSummaryModal` flips **VERIFIED GREEN** with the **`SHA256-ED25519` Proof Dossier**.
 
-**Johanne (V.O. over demo — ~48 words, ~20–23 seconds):**  
+**Johanne (V.O. over demo (generate a motion graphics  video  for this) — ~48 words, ~20–23 seconds):**  
 "Watch our working prototype on a real billing API. Baseline tests pass, yet customer invoices still leak. The Proof Gate blocks unproved style noise while rival models prove the security and logic flaws with failing tests—shipping **one green PR** with a Proof Dossier, cutting noise **over 80%** and merging **3x faster**."
 
 ---
@@ -150,19 +150,18 @@
 ### SCENE 3B — MULTI-DEV BRIDGE (`1:45 – 1:52`)
 *(Outside the 30s demo timer — bridges into Scene 4)*
 
-**[VISUAL]:** Smash cut back to classroom. **John Prince** and **Dexter** hold up the **`API CONTRACT (LOCKED)`** sheet and fist-bump.
+**[VISUAL]:** Smash cut back to classroom. **John Prince** and **Dexter (Benitez)** hold up the **`API CONTRACT (LOCKED)`** sheet and fist-bump.
 
-**Dexter:**  
+**Dexter (Benitez):**  
 "And for teams, locked API contracts and parallel Pods deliver **over 90% first-pass merges**—zero interface drift."
 
 ---
 
-### SCENE 4 — "WHY THIS IS TRULY NEW" (`1:52 – 2:37`)
+### SCENE 4 — "WHY THIS IS TRULY NEW" (`1:52 – 2:34`)
 *(Covers: Novelty 25% + Competitive Positioning — split cleanly across 2 presenters)*
 
-**[VISUAL]:** Cut to the left half of the **Classroom Whiteboard** showing the **2×2 Competitive Matrix**.
-
 #### Part 4A: The 4 Breakthroughs (`1:52 – 2:14`)
+** (Everything here must be created a motion  graphics video corresponding the audio) **
 **Gianne:** *(energetic, crisp hand counts)*  
 "Why is CouncilCode genuinely new—not just an AI wrapper? Four reasons.  
 First, **Executable Proof Over Opinions**: every claim must fail on old code and pass on patched code.  
@@ -171,9 +170,8 @@ Third, **Zero-Token Fast-Fail**: broken syntax never burns a review token.
 Fourth, **Zero Lock-In**: `councilcode eject` leaves standard Jest or PyTest files behind."
 
 #### Part 4B: The 2×2 Competitive Matrix (`2:14 – 2:34`)
-**[VISUAL]:** **James** steps in smoothly, pointing directly to each quadrant on the whiteboard.
 
-**James:**  
+**James (Samson):**  
 "On our matrix—Code Reliability versus PR Signal—every rival forces a trade-off.  
 In-IDE agents like **Cursor, Copilot, and Claude Code** suffer single-model bias.  
 Bots like **CodeRabbit, Qodo, and Devin** spam unverified comments or burn tokens in closed loops.  
@@ -183,14 +181,12 @@ Manual review plus CI is slow.
 ---
 
 ### SCENE 5 — TARGET MARKET & SUSTAINABLE BUSINESS MODEL (`2:34 – 3:14`)
+** (Everything here must be created a motion  graphics video corresponding the audio, or a screen recording from the web) **
 *(Covers: Target Market 10% + Business Model 15% — NO Initial Investment ask here per OpenLearning tip!)*
-
-**[VISUAL]:** Camera pans to the right half of the **Whiteboard** showing **TAM / SAM / SOM** circles and the **BYOK Pricing Ladder**.
 
 **Casidey:**  
 "Out of **28.5 million** Git developers (**TAM**), **4.8 million** already ship AI Pull Requests (**SAM**). Our beachhead **SOM** is just **0.5%**—**24,000** solo builders, hackathon squads, open-source maintainers, and 2-to-5 dev startups."
 
-**[ACTION]:** **Johanne** steps beside Casidey.
 
 **Johanne:**  
 "Our economics? **Bring-Your-Own-Key.** Customers supply their own API keys or local models—so our LLM token cost is **zero**, and cloud microVMs cost just **1.5 to 2 cents** per run."
